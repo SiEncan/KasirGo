@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kasir_go/component/main_navigation_rail.dart';
+import 'package:kasir_go/screen/products_screen.dart';
 import 'package:kasir_go/screen/profile_screen.dart';
 import 'home_screen.dart';
 
@@ -41,7 +42,7 @@ class _POSScreenState extends State<POSScreen> {
       case 'category':
         return _buildCategoryScreen();
       case 'products':
-        return _buildProductsScreen();
+        return const ManageProductsScreen();
       case 'profile':
         return const ProfileScreen();
       case 'settings':
