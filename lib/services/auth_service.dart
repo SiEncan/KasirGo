@@ -1,79 +1,90 @@
-import 'package:flutter/foundation.dart';
-import '../models/user.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:jwt_decode/jwt_decode.dart';
+import '../utils/token_storage.dart';
 
-class AuthService extends ChangeNotifier {
-  User? _currentUser;
-  bool _isLoading = false;
-  String? _error;
+class AuthService {
+  final String baseUrl = "http://10.0.2.2:8000/api";
+  final TokenStorage tokenStorage;
 
-  User? get currentUser => _currentUser;
-  bool get isAuthenticated => _currentUser != null;
-  bool get isLoading => _isLoading;
-  String? get error => _error;
+  AuthService({required this.tokenStorage});
 
-  // Mock user credentials (in production, use real backend)
-  final _validUsers = {
-    'adnan@cafe.com': {
-      'password': 'adnan123',
-      'name': 'adnan',
-      'role': 'admin',
-    },
-    'cashier@cafe.com': {
-      'password': 'cashier123d',
-      'name': 'Cashier User',
-      'role': 'cashier',
-    },
-    'barista@cafe.com': {
-      'password': 'barista123',
-      'name': 'Barista User',
-      'role': 'barista',
-    },
-  };
+  Future<Map<String, dynamic>> login(String email, String password) async {
+    final url = Uri.parse("$baseUrl/auth/login/");
 
-  Future<bool> login(String email, String password) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "username": email,
+        "password": password,
+      }),
+    );
 
-    try {
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 800));
-
-      if (_validUsers.containsKey(email)) {
-        final userData = _validUsers[email]!;
-        if (userData['password'] == password) {
-          _currentUser = User(
-            id: email.split('@').first,
-            email: email,
-            name: userData['name'] as String,
-            role: userData['role'] as String,
-          );
-          _isLoading = false;
-          notifyListeners();
-          return true;
-        }
-      }
-
-      _error = 'Invalid email or password';
-      _isLoading = false;
-      notifyListeners();
-      return false;
-    } catch (e) {
-      _error = 'Login failed: $e';
-      _isLoading = false;
-      notifyListeners();
-      return false;
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Login failed: ${response.body}");
     }
   }
 
-  Future<void> logout() async {
-    _currentUser = null;
-    _error = null;
-    notifyListeners();
+  Future<String?> getUserId() async {
+    final accessToken = await tokenStorage.getAccessToken();
+    if (accessToken == null) return null;
+
+    final payload = Jwt.parseJwt(accessToken);
+    return payload['user_id'];
   }
 
-  void clearError() {
-    _error = null;
-    notifyListeners();
+  Future<void> refreshAccessToken() async {
+    final refreshToken = await tokenStorage.getRefreshToken();
+    if (refreshToken == null) throw Exception("No refresh token");
+
+    final url = Uri.parse("$baseUrl/auth/refresh/");
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"refresh": refreshToken}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      await tokenStorage.saveTokens(data['access'], data['refresh'] ?? refreshToken);
+    } else {
+      // refresh gagal → logout
+      await tokenStorage.clear();
+      throw Exception("Refresh token failed");
+    }
   }
+
+  Future<Map<String, dynamic>> getProfile(String userId) async {
+    String? accessToken = await tokenStorage.getAccessToken();
+
+    if (accessToken == null || Jwt.isExpired(accessToken)) {
+      try {
+        await refreshAccessToken();
+        accessToken = await tokenStorage.getAccessToken();
+      } catch (e) {
+        throw Exception("Token expired, user harus login lagi");
+      }
+    }
+
+    final url = Uri.parse("$baseUrl/user/$userId/");
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    final Map<String, dynamic> jsonBody = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      return jsonBody['data'];
+    } else {
+      throw Exception("Failed to fetch profile: ${response.body}");
+    }
+  }
+
 }
