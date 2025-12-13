@@ -16,21 +16,29 @@ class _ManageProductsScreenState extends ConsumerState<ManageProductsScreen> {
   @override
   void initState() {
     super.initState();
+
     Future.microtask(() {
-      ref.read(categoryProvider.notifier).fetchCategories();
+      ref.read(categoryProvider.notifier).fetchAllCategories();
       ref.read(productProvider.notifier).fetchAllProducts();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final categories = ref.watch(categoryProvider).categories?.map((cat) => cat['name'] as String).toList() ?? [];
-    final products = ref.watch(productProvider).products ?? [];
+    final categoriesState = ref.watch(categoryProvider);
+    final productsState = ref.watch(productProvider);
 
-    if (selectedCategory.isEmpty && categories.isNotEmpty) {
-      selectedCategory = categories[0];
+    if (productsState.isLoading || categoriesState.isLoading) {
+      return const Center(child: CircularProgressIndicator());
     }
-    // final categoryProducts = products[selectedCategory] ?? [];
+
+    if (selectedCategory.isEmpty && categoriesState.categories.isNotEmpty) {
+      selectedCategory = categoriesState.categories.first['name'];
+    }
+    
+    final filteredProducts = productsState.products
+                            .where((product) => product['category_name'] == selectedCategory)
+                            .toList();
 
     return Scaffold(
       appBar: AppBar(title: const Text("Manage Products & Categories")),
@@ -46,12 +54,12 @@ class _ManageProductsScreenState extends ConsumerState<ManageProductsScreen> {
                   padding: EdgeInsets.all(16.0),
                   child: Text("Categories", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
-                ...products.map((product) {
-                  if (product['category_name'] == null) return Container();
+                ...categoriesState.categories.map((category) {
+                  if (category['name'] == null) return Container();
                   return ListTile(
-                    title: Text(product['category_name']),
-                    selected: selectedCategory == product['category_name'],
-                    onTap: () => setState(() => selectedCategory = product['category_name']),
+                    title: Text(category['name']),
+                    selected: selectedCategory == category['name'],
+                    onTap: () => setState(() => selectedCategory = category['name']),
                     trailing: IconButton(
                       icon: const Icon(Icons.edit),
                       onPressed: () {
@@ -61,7 +69,7 @@ class _ManageProductsScreenState extends ConsumerState<ManageProductsScreen> {
                           builder: (_) => AlertDialog(
                             title: const Text("Edit Category"),
                             content: TextFormField(
-                              initialValue: product['category_name'],
+                              initialValue: category['name'],
                             ),
                             actions: [
                               TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
@@ -103,26 +111,27 @@ class _ManageProductsScreenState extends ConsumerState<ManageProductsScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  // Expanded(
-                  //   child: ListView.builder(
-                  //     itemCount: categoryProducts.length,
-                  //     itemBuilder: (context, index) {
-                  //       final product = categoryProducts[index];
-                  //       return Card(
-                  //         child: ListTile(
-                  //           title: Text(product['name']),
-                  //           subtitle: Text("Price: ${product['price']}"),
-                  //           trailing: IconButton(
-                  //             icon: const Icon(Icons.edit),
-                  //             onPressed: () {
-                  //               // TODO: edit produk
-                  //             },
-                  //           ),
-                  //         ),
-                  //       );
-                  //     },
-                  //   ),
-                  // )
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: filteredProducts.length,
+                      itemBuilder: (context, index) {
+                        final product = filteredProducts[index];
+
+                        return Card(
+                          child: ListTile(
+                            title: Text(product['name']),
+                            subtitle: Text("Price: ${product['price']}"),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () {
+                                // TODO: edit produk
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  )
                 ],
               ),
             ),

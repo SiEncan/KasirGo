@@ -6,6 +6,7 @@ import 'auth_service.dart';
 
 class ProductService {
   final String baseUrl = "http://10.0.2.2:8000/api";
+  // final String baseUrl = "http://localhost:8000/api";
   final TokenStorage tokenStorage;
   final AuthService authService;
 

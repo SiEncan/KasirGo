@@ -5,6 +5,7 @@ import '../utils/token_storage.dart';
 
 class AuthService {
   final String baseUrl = "http://10.0.2.2:8000/api";
+  // final String baseUrl = "http://localhost:8000/api";
   final TokenStorage tokenStorage;
 
   AuthService({required this.tokenStorage});
@@ -51,7 +52,7 @@ class AuthService {
       final data = jsonDecode(response.body);
       await tokenStorage.saveTokens(data['access'], data['refresh'] ?? refreshToken);
     } else {
-      // refresh gagal → logout
+      // refresh gagal maka logout
       await tokenStorage.clear();
       throw Exception("Refresh token failed");
     }

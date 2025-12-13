@@ -6,12 +6,14 @@ import 'auth_service.dart';
 
 class CategoryService {
   final String baseUrl = "http://10.0.2.2:8000/api";
+  // final String baseUrl = "http://localhost:8000/api";
+
   final TokenStorage tokenStorage;
   final AuthService authService;
 
   CategoryService({required this.tokenStorage, required this.authService});
 
-  Future<Map<String, dynamic>> getAllCategories() async {
+  Future<List<Map<String, dynamic>>> getAllCategories() async {
     String? accessToken = await tokenStorage.getAccessToken();
 
     if (accessToken == null || Jwt.isExpired(accessToken)) {
@@ -32,10 +34,10 @@ class CategoryService {
       },
     );
 
-    final Map<String, dynamic> jsonBody = jsonDecode(response.body);
+    final jsonBody = jsonDecode(response.body);
     
     if (response.statusCode == 200) {
-      return jsonBody['data'];
+      return List<Map<String, dynamic>>.from(jsonBody['data']);
     } else {
       throw Exception("Failed to fetch profile: ${response.body}");
     }

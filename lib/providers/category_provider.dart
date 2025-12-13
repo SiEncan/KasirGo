@@ -15,9 +15,21 @@ final categoryServiceProvider = Provider<CategoryService>((ref) {
 class CategoryState {
   final bool isLoading;
   final String? error;
-  final List<Map<String, dynamic>>? categories;
+  final List<Map<String, dynamic>> categories;
 
-  CategoryState({this.isLoading = false, this.error, this.categories});
+  CategoryState({this.isLoading = false, this.error, this.categories = const []});
+
+  CategoryState copyWith({
+    bool? isLoading,
+    String? error,
+    List<Map<String, dynamic>>? categories,
+  }) {
+    return CategoryState(
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
+      categories: categories ?? this.categories,
+    );
+  }
 }
 
 class CategoryNotifier extends StateNotifier<CategoryState> {
@@ -25,14 +37,13 @@ class CategoryNotifier extends StateNotifier<CategoryState> {
 
   CategoryNotifier(this.service) : super(CategoryState());
 
-  Future<void> fetchCategories() async {
-    state = CategoryState(isLoading: true);
+  Future<void> fetchAllCategories() async {
+    state = state.copyWith(isLoading: true, error: null);
     try {
-      final response = await service.getAllCategories();
-      final List<Map<String, dynamic>> categories = List<Map<String, dynamic>>.from(response['data']);
-      state = CategoryState(categories: categories, isLoading: false);
+      final data = await service.getAllCategories();
+      state = state.copyWith(isLoading: false, categories: data);
     } catch (e) {
-      state = CategoryState(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 }

@@ -15,12 +15,12 @@ final productServiceProvider = Provider<ProductService>((ref) {
 class ProductState {
   final bool isLoading;
   final String? error;
-  final List<Map<String, dynamic>>? products;
+  final List<Map<String, dynamic>> products;
 
   ProductState({
     this.isLoading = false,
     this.error,
-    this.products,
+    this.products = const [],
   });
 
   ProductState copyWith({
@@ -36,7 +36,6 @@ class ProductState {
   }
 }
 
-// Notifier untuk meng-handle fetching produk
 class ProductNotifier extends StateNotifier<ProductState> {
   final ProductService productService;
 
@@ -50,7 +49,6 @@ class ProductNotifier extends StateNotifier<ProductState> {
       state = state.copyWith(isLoading: false, products: data);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
-      print('error di service: $e');
     }
   }
 }
