@@ -1,8 +1,10 @@
-import 'dart:io';
-
+import 'package:iconsax/iconsax.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:kasir_go/component/products/product_table.dart';
+import 'package:kasir_go/component/products/dialogs/add_category_dialog.dart';
+import 'package:kasir_go/component/products/dialogs/add_product_dialog.dart';
+import 'package:kasir_go/component/products/dialogs/edit_category_dialog.dart';
 import 'package:kasir_go/providers/product_provider.dart';
 import 'package:kasir_go/providers/category_provider.dart';
 
@@ -54,239 +56,202 @@ class _ManageProductsScreenState extends ConsumerState<ManageProductsScreen> {
                             .toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Manage Products & Categories")),
-      body: Row(
-        children: [
-          // Sidebar kategori
-          Container(
-            width: 200,
-            color: Colors.grey[200],
-            child: ListView(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text("Categories", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Row(
+          children: [
+            // Sidebar kategori
+            Container(
+              width: 200,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  right: BorderSide(
+                    color: Colors.grey.shade200,
+                    width: 1,
+                  ),
                 ),
-                ...categoriesState.categories.map((category) {
-                  if (category['id'] == null) return Container();
-                  return ListTile(
-                    title: Text(category['name']),
-                    selected: selectedCategoryId == category['id'].toString(),
-                    onTap: () => setState(() => selectedCategoryId = category['id'].toString()),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: () {
-                        // TODO: edit kategori
-                        showDialog(
-                          context: context,
-                          builder: (_) => AlertDialog(
-                            title: const Text("Edit Category"),
-                            content: TextFormField(
-                              initialValue: category['name'],
-                            ),
-                            actions: [
-                              TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-                              TextButton(onPressed: () {}, child: const Text("Save")),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                }).toList(),
-                ListTile(
-                  leading: const Icon(Icons.add),
-                  title: const Text("Add Category"),
-                  onTap: () {
-                    // TODO: tambah kategori
-                  },
-                ),
-              ],
-            ),
-          ),
-
-          // Produk
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              ),
               child: Column(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Products in ${selectedCategoryName ?? "all categories"}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      ElevatedButton(
-                        onPressed: () {
-                          // TODO: tambah produk
-                          _showAddProductDialog(categoriesState);
-                        },
-                        child: const Text("Add Product"),
-                      )
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: filteredProducts.length,
-                      itemBuilder: (context, index) {
-                        final product = filteredProducts[index];
-
-                        return Card(
-                          child: ListTile(
-                            title: Text(product['name']),
-                            subtitle: Text("Price: ${product['price']}"),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.edit),
-                              onPressed: () {
-                                // TODO: edit produk
-                              },
-                            ),
-                          ),
-                        );
-                      },
+                  // Header
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border(
+                        bottom: BorderSide(
+                          color: Colors.grey.shade200,
+                          width: 1,
+                        ),
+                      ),
                     ),
-                  )
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Iconsax.category5,
+                            color: Colors.orange.shade700,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          "Categories",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Category List
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      children: [
+                        ...categoriesState.categories.map((category) {
+                          if (category['id'] == null) return Container();
+                          
+                          final isSelected = selectedCategoryId == category['id'].toString();
+                          
+                          return Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isSelected ? Colors.orange.shade50 : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                              border: isSelected
+                                  ? Border.all(color: Colors.deepOrange.shade500, width: 1)
+                                  : null,
+                            ),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              title: Text(
+                                category['name'],
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                  color: isSelected ? Colors.orange.shade900 : Colors.black87,
+                                ),
+                              ),
+                              selected: isSelected,
+                              onTap: () => setState(() => selectedCategoryId = category['id'].toString()),
+                              trailing: IconButton(
+                                icon: Icon(
+                                  Icons.edit_outlined,
+                                  size: 20,
+                                  color: isSelected ? Colors.orange.shade900 : Colors.grey.shade600,
+                                ),
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => EditCategoryDialog(category: category),
+                                  );
+                                },
+                              ),
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+
+                  // Add Category Button
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      border: Border(
+                        top: BorderSide(
+                          color: Colors.grey.shade200,
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => const AddCategoryDialog(),
+                          );
+                        },
+                        icon: const Icon(Icons.add, size: 20),
+                        label: const Text(
+                          "Add Category",
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange.shade600,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
-          )
-        ],
-      ),
-    );
-  }
-
-  // add product dialog
-
-  void _showAddProductDialog(CategoryState categoriesState) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        final ImagePicker picker = ImagePicker();
-        XFile? pickedImage;
-
-        String productName = '';
-        String productDescription = '';
-        int productPrice = 0;
-        int productCost = 0;
-        int productStock = 0;
-        bool productIsAvailable = true;
-        String productSKU = '';
-        String productCategory = selectedCategoryId;
-
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            Future<void> pickImage() async {
-              final XFile? image = await picker.pickImage(
-                source: ImageSource.gallery,
-                imageQuality: 80,
-              );
-
-              if (image != null) {
-                setDialogState(() {
-                  pickedImage = image;
-                });
-              }
-            }
-
-            return AlertDialog(
-              title: const Text("Add Product"),
-              content: SingleChildScrollView(
+        
+            // Produk
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // PREVIEW IMAGE
-                    if (pickedImage != null)
-                      Image.file(
-                        File(pickedImage!.path),
-                        height: 120,
-                      ),
-
-                    TextButton.icon(
-                      onPressed: pickImage,
-                      icon: const Icon(Icons.image),
-                      label: const Text("Choose Image"),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Products in ${selectedCategoryName ?? "all categories"}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            backgroundColor: Colors.deepOrange.shade600,
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8),
+                          )
+                          ),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) => AddProductDialog(
+                                initialCategoryId: selectedCategoryId,
+                                categories: categoriesState.categories,
+                              ),
+                            );
+                          },
+                          child: const Text("+ Add Product", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                        )
+                      ],
                     ),
-
-                    const SizedBox(height: 8),
-
-                    TextFormField(
-                      decoration: const InputDecoration(labelText: "Product Name"),
-                      onChanged: (value) => productName = value,
-                    ),
-                    TextFormField(
-                      decoration: const InputDecoration(labelText: "Product Description"),
-                      onChanged: (value) => productDescription = value,
-                    ),
-                    TextFormField(
-                      decoration: const InputDecoration(labelText: "Product Price"),
-                      keyboardType: TextInputType.number,
-                      onChanged: (value) =>  productPrice = int.tryParse(value) ?? 0,
-                    ),
-                    TextFormField(
-                      decoration: const InputDecoration(labelText: "Product Cost"),
-                      keyboardType: TextInputType.number,
-                      onChanged: (value) => productCost = int.tryParse(value) ?? 0,
-                    ),
-                    TextFormField(
-                      decoration: const InputDecoration(labelText: "Product Stock"),
-                      keyboardType: TextInputType.number,
-                      onChanged: (value) => productStock = int.tryParse(value) ?? 0,
-                    ),
-                    TextFormField(
-                      decoration: const InputDecoration(labelText: "Product SKU"),
-                      onChanged: (value) => productSKU = value,
-                    ),
-                    DropdownButtonFormField<String>(
-                      value: productCategory,
-                      decoration: const InputDecoration(
-                        labelText: 'Category',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: categoriesState.categories
-                          .map<DropdownMenuItem<String>>((category) {
-                        return DropdownMenuItem<String>(
-                          value: category['id'].toString(),
-                          child: Text(category['name']),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          productCategory = value;
-                        };
-                      },
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child:
+                      ProductTable( products: filteredProducts)
                     )
                   ],
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("Cancel"),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    final payload = {
-                      "name": productName,
-                      "description": productDescription,
-                      "price": productPrice.toDouble(),
-                      "cost": productCost.toDouble(),
-                      "stock": productStock,
-                      "image": pickedImage,
-                      "is_available": productIsAvailable,
-                      "sku": productSKU,
-                      "category": productCategory,
-                    };
-                    await ref.read(productProvider.notifier).addProduct(payload).then((_) {
-                      Navigator.pop(context);
-                    });
-                  },
-                  child: const Text("Save"),
-                ),
-              ],
-            );
-          },
-        );
-      },
+            )
+          ],
+        ),
+      ),
     );
   }
 }

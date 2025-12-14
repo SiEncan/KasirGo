@@ -43,4 +43,84 @@ class CategoryService {
     }
   }
 
+  Future<void> createCategory(Map<String, dynamic> categoryData) async {
+    String? accessToken = await tokenStorage.getAccessToken();
+
+    if (accessToken == null || Jwt.isExpired(accessToken)) {
+      try {
+        await authService.refreshAccessToken();
+        accessToken = await tokenStorage.getAccessToken();
+      } catch (e) {
+        throw Exception("Token expired, user harus login lagi");
+      }
+    }
+
+    final uri = Uri.parse("$baseUrl/category/create/");
+    final response = await http.post(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(categoryData),
+    );
+
+    if (response.statusCode != 201) {
+      throw Exception("Failed to create category: ${response.body}");
+    }
+  }
+
+  Future<void> editCategory(int categoryId, Map<String, dynamic> categoryData) async {
+    String? accessToken = await tokenStorage.getAccessToken();
+
+    if (accessToken == null || Jwt.isExpired(accessToken)) {
+      try {
+        await authService.refreshAccessToken();
+        accessToken = await tokenStorage.getAccessToken();
+      } catch (e) {
+        throw Exception("Token expired, user harus login lagi");
+      }
+    }
+
+    final uri = Uri.parse("$baseUrl/category/$categoryId/");
+    final response = await http.patch(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(categoryData),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed to edit category: ${response.body}");
+    }
+  }
+
+  Future<void> deleteCategory(int categoryId) async {
+    String? accessToken = await tokenStorage.getAccessToken();
+
+    if (accessToken == null || Jwt.isExpired(accessToken)) {
+      try {
+        await authService.refreshAccessToken();
+        accessToken = await tokenStorage.getAccessToken();
+      } catch (e) {
+        throw Exception("Token expired, user harus login lagi");
+      }
+    }
+
+    final uri = Uri.parse("$baseUrl/category/$categoryId/");
+    final response = await http.delete(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed to delete category: ${response.body}");
+    }
+  }
+
 }

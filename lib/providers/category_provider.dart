@@ -46,6 +46,36 @@ class CategoryNotifier extends StateNotifier<CategoryState> {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
+
+  Future<void> addCategory(Map<String, dynamic> payload) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await service.createCategory(payload);
+      await fetchAllCategories();
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  Future<void> editCategory(int categoryId, Map<String, dynamic> payload) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await service.editCategory(categoryId, payload);
+      await fetchAllCategories();
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  Future<void> deleteCategory(int categoryId) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await service.deleteCategory(categoryId);
+      await fetchAllCategories();
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
 }
 
 final categoryProvider =

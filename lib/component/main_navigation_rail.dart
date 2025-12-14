@@ -74,7 +74,7 @@ class MainNavigationRail extends StatelessWidget {
         ),
         useIndicator: false,
         leading: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 2),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
