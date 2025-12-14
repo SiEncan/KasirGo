@@ -17,7 +17,6 @@ class ManageProductsScreen extends ConsumerStatefulWidget {
 
 class _ManageProductsScreenState extends ConsumerState<ManageProductsScreen> {
   String selectedCategoryId = '';
-  bool _initialized = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -44,19 +43,19 @@ class _ManageProductsScreenState extends ConsumerState<ManageProductsScreen> {
     final productsState = ref.watch(productProvider);
 
     final selectedCategory = selectedCategoryId == 'all'
-        ? {'name': 'All Products'}
-        : categoriesState.categories.firstWhere(
-            (c) => c['id'].toString() == selectedCategoryId,
-            orElse: () => {},
-          );
+      ? {'name': 'All Products'}
+      : categoriesState.categories.firstWhere(
+          (c) => c['id'].toString() == selectedCategoryId,
+          orElse: () => {},
+        );
 
     final selectedCategoryName = selectedCategory['name'] ?? '';
 
     var filteredProducts = selectedCategoryId == 'all'
-        ? productsState.products
-        : productsState.products
-            .where((product) => product['category'].toString() == selectedCategoryId)
-            .toList();
+      ? productsState.products
+      : productsState.products
+        .where((product) => product['category'].toString() == selectedCategoryId)
+        .toList();
 
     if (_searchQuery.isNotEmpty) {
       filteredProducts = filteredProducts.where((product) {
