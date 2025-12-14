@@ -243,7 +243,10 @@ class _ManageProductsScreenState extends ConsumerState<ManageProductsScreen> {
                     const SizedBox(height: 16),
                     Expanded(
                       child:
-                      ProductTable( products: filteredProducts)
+                      ProductTable(
+                        products: filteredProducts,
+                        categories: categoriesState.categories,
+                      )
                     )
                   ],
                 ),

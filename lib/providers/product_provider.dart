@@ -68,6 +68,38 @@ class ProductNotifier extends StateNotifier<ProductState> {
       );
     }
   }
+
+  Future<void> editProduct(int productId, Map<String, dynamic> payload) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      await productService.editProduct(productId, payload);
+
+      // Refresh daftar produk setelah pengeditan
+      await fetchAllProducts();
+
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
+  }
+
+  Future<void> deleteProduct(int productId) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      await productService.deleteProduct(productId);
+      await fetchAllProducts();
+
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
+  }
 }
 
 final productProvider =

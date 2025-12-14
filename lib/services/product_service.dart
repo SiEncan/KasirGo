@@ -88,4 +88,75 @@ class ProductService {
     }
   }
 
+  Future<void> editProduct(int productId, Map<String, dynamic> productData) async {
+    String? accessToken = await tokenStorage.getAccessToken();
+
+    if (accessToken == null || Jwt.isExpired(accessToken)) {
+      try {
+        await authService.refreshAccessToken();
+        accessToken = await tokenStorage.getAccessToken();
+      } catch (e) {
+        throw Exception("Token expired, You must log in again");
+      }
+    }
+
+    final uri = Uri.parse("$baseUrl/product/$productId/");
+    final request = http.MultipartRequest("PATCH", uri);
+
+    request.headers['Authorization'] = 'Bearer $accessToken';
+
+    request.fields['name'] = productData['name'];
+    request.fields['description'] = productData['description'];
+    request.fields['price'] = productData['price'].toString();
+    request.fields['cost'] = productData['cost'].toString();
+    request.fields['stock'] = productData['stock'].toString();
+    request.fields['sku'] = productData['sku'];
+    request.fields['category'] = productData['category'].toString();
+    request.fields['is_available'] = productData['is_available'] ? 'true' : 'false';
+
+    final XFile? image = productData['image'];
+
+    if (image != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'image',
+          image.path,
+        ),
+      );
+    }
+
+    final response = await request.send();
+
+    if (response.statusCode != 200) {
+      final body = await response.stream.bytesToString();
+      throw Exception("Failed to edit product: $body");
+    }
+  }
+
+  Future<void> deleteProduct(int productId) async {
+    String? accessToken = await tokenStorage.getAccessToken();
+
+    if (accessToken == null || Jwt.isExpired(accessToken)) {
+      try {
+        await authService.refreshAccessToken();
+        accessToken = await tokenStorage.getAccessToken();
+      } catch (e) {
+        throw Exception("Token expired, You must log in again");
+      }
+    }
+
+    final uri = Uri.parse("$baseUrl/product/$productId/");
+    final response = await http.delete(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed to delete product: ${response.body}");
+    }
+  }
+
 }

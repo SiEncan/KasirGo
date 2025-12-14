@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:kasir_go/component/products/dialogs/edit_product_dialog.dart';
+import 'package:kasir_go/providers/product_provider.dart';
 
-class ProductTable extends StatelessWidget {
+class ProductTable extends ConsumerWidget {
   final List<Map<String, dynamic>> products;
+  final List<Map<String, dynamic>> categories;
 
   const ProductTable({
     super.key,
     required this.products,
+    required this.categories,
   });
 
   String formatPrice(String price) {
@@ -21,7 +26,7 @@ class ProductTable extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -69,7 +74,7 @@ class ProductTable extends StatelessWidget {
                         _buildStockCell(product, flex: 1),
                         _buildPriceCell(product, flex: 2),
                         _buildCostCell(product, flex: 2),
-                        _buildActionCell(product, flex: 3),
+                        _buildActionCell(context, ref, product, flex: 3),
                       ],
                     ),
                   ),
@@ -306,7 +311,7 @@ class ProductTable extends StatelessWidget {
     );
   }
 
-  Widget _buildActionCell(Map<String, dynamic> product, {int flex = 3}) {
+  Widget _buildActionCell(BuildContext context, WidgetRef ref, Map<String, dynamic> product, {int flex = 3}) {
     return Expanded(
       flex: flex,
       child: Container(
@@ -316,6 +321,13 @@ class ProductTable extends StatelessWidget {
           children: [
             InkWell(
               onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => EditProductDialog(
+                    product: product,
+                    categories: categories,
+                  ),
+                );
               },
               child: Row(
                 children: [
@@ -330,7 +342,139 @@ class ProductTable extends StatelessWidget {
               ),
             ),
             InkWell(
-              onTap: () {
+              onTap: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  barrierDismissible: true,
+                  builder: (BuildContext context) {
+                    return Dialog(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      elevation: 0,
+                      backgroundColor: Colors.transparent,
+                      child: Container(
+                        constraints: const BoxConstraints(maxWidth: 400),
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 70,
+                              height: 70,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.red.shade400,
+                                    Colors.red.shade600,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.red.shade200,
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.delete_outline_rounded,
+                                color: Colors.white,
+                                size: 38,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            const Text(
+                              'Delete Product',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Are you sure you want to delete "${product['name']}"? This action cannot be undone.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.grey.shade700,
+                                height: 1.5,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: () => Navigator.pop(context, false),
+                                    style: OutlinedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(vertical: 14),
+                                      side: BorderSide(color: Colors.grey.shade400),
+                                      foregroundColor: Colors.grey.shade700,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'Cancel',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: () => Navigator.pop(context, true),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red.shade600,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 14),
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'Delete',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+
+                if (confirm == true && context.mounted) {
+                  await ref.read(productProvider.notifier).deleteProduct(product['id']);
+                }
               },
               child: Row(
                 children: [
