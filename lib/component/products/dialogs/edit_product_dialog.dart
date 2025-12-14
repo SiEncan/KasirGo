@@ -439,7 +439,7 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
-                      value: _productCategory.isEmpty ? '' : _productCategory,
+                      initialValue: _productCategory.isEmpty ? '' : _productCategory,
                       decoration: _inputDecoration("Category", Icons.category),
                       items: [
                         const DropdownMenuItem<String>(
@@ -451,7 +451,7 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
                             value: category['id'].toString(),
                             child: Text(category['name']),
                           );
-                        }).toList(),
+                        }),
                       ],
                       onChanged: (value) {
                         setState(() {

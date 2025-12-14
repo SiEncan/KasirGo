@@ -38,7 +38,6 @@ class ProductTable extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          // Header
           Row(
             children: [
               _buildHeaderCell('Product', flex: 3),
@@ -49,7 +48,6 @@ class ProductTable extends ConsumerWidget {
               _buildHeaderCell('Action', flex: 3, isLast: true),
             ],
           ),
-          // Body with scroll
           Expanded(
             child:ListView.builder(
               padding: EdgeInsets.zero,
@@ -319,8 +317,19 @@ class ProductTable extends ConsumerWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            InkWell(
-              onTap: () {
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                side: BorderSide.none,
+                foregroundColor: Colors.green.shade600,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () {
                 showDialog(
                   context: context,
                   builder: (context) => EditProductDialog(
@@ -341,8 +350,19 @@ class ProductTable extends ConsumerWidget {
                 ],
               ),
             ),
-            InkWell(
-              onTap: () async {
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                side: BorderSide.none,
+                foregroundColor: Colors.red.shade600,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () async {
                 final confirm = await showDialog<bool>(
                   context: context,
                   barrierDismissible: true,

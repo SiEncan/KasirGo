@@ -18,10 +18,13 @@ class ManageProductsScreen extends ConsumerStatefulWidget {
 class _ManageProductsScreenState extends ConsumerState<ManageProductsScreen> {
   String selectedCategoryId = '';
   bool _initialized = false;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
+    selectedCategoryId = 'all';
 
     Future.microtask(() {
       ref.read(categoryProvider.notifier).fetchAllCategories();
@@ -30,37 +33,46 @@ class _ManageProductsScreenState extends ConsumerState<ManageProductsScreen> {
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final categoriesState = ref.watch(categoryProvider);
     final productsState = ref.watch(productProvider);
 
-    final selectedCategory = categoriesState.categories.firstWhere(
-      (c) => c['id'].toString() == selectedCategoryId,
-      orElse: () => {},
-    );
+    final selectedCategory = selectedCategoryId == 'all'
+        ? {'name': 'All Products'}
+        : categoriesState.categories.firstWhere(
+            (c) => c['id'].toString() == selectedCategoryId,
+            orElse: () => {},
+          );
 
     final selectedCategoryName = selectedCategory['name'] ?? '';
 
-    if (productsState.isLoading || categoriesState.isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    var filteredProducts = selectedCategoryId == 'all'
+        ? productsState.products
+        : productsState.products
+            .where((product) => product['category'].toString() == selectedCategoryId)
+            .toList();
 
-    if (!_initialized && categoriesState.categories.isNotEmpty) {
-      selectedCategoryId =
-          categoriesState.categories.first['id'].toString();
-      _initialized = true;
+    if (_searchQuery.isNotEmpty) {
+      filteredProducts = filteredProducts.where((product) {
+        final name = product['name'].toString().toLowerCase();
+        final description = (product['description'] ?? '').toString().toLowerCase();
+        final sku = (product['sku'] ?? '').toString().toLowerCase();
+        final query = _searchQuery.toLowerCase();
+        return name.contains(query) || description.contains(query) || sku.contains(query);
+      }).toList();
     }
-    
-    final filteredProducts = productsState.products
-                            .where((product) => product['category'].toString() == selectedCategoryId)
-                            .toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Row(
           children: [
-            // Sidebar kategori
             Container(
               width: 200,
               decoration: BoxDecoration(
@@ -74,7 +86,6 @@ class _ManageProductsScreenState extends ConsumerState<ManageProductsScreen> {
               ),
               child: Column(
                 children: [
-                  // Header
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -113,11 +124,40 @@ class _ManageProductsScreenState extends ConsumerState<ManageProductsScreen> {
                     ),
                   ),
 
-                  // Category List
                   Expanded(
                     child: ListView(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       children: [
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: selectedCategoryId == 'all' ? Colors.orange.shade50 : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                            border: selectedCategoryId == 'all'
+                                ? Border.all(color: Colors.deepOrange.shade500, width: 1)
+                                : null,
+                          ),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            title: Text(
+                              'All Products',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: selectedCategoryId == 'all' ? FontWeight.bold : FontWeight.w500,
+                                color: selectedCategoryId == 'all' ? Colors.orange.shade900 : Colors.black87,
+                              ),
+                            ),
+                            selected: selectedCategoryId == 'all',
+                            onTap: () => setState(() => selectedCategoryId = 'all'),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          child: Divider(
+                            color: Colors.grey.shade300,
+                            height: 1,
+                          ),
+                        ),
                         ...categoriesState.categories.map((category) {
                           if (category['id'] == null) return Container();
                           
@@ -164,7 +204,6 @@ class _ManageProductsScreenState extends ConsumerState<ManageProductsScreen> {
                     ),
                   ),
 
-                  // Add Category Button
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -194,7 +233,7 @@ class _ManageProductsScreenState extends ConsumerState<ManageProductsScreen> {
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orange.shade600,
+                          backgroundColor: Colors.orange.shade900,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           elevation: 0,
@@ -208,36 +247,109 @@ class _ManageProductsScreenState extends ConsumerState<ManageProductsScreen> {
                 ],
               ),
             ),
-        
-            // Produk
+              
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("Products in ${selectedCategoryName ?? "all categories"}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            backgroundColor: Colors.deepOrange.shade600,
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8),
-                          )
+                        Text(
+                          selectedCategoryName == "All Products" ? "All Products" : "Products in $selectedCategoryName", 
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(width: 24),
+                        Expanded(
+                          child: SizedBox(
+                            height: 45,
+                            child: TextField(
+                              controller: _searchController,
+                              onChanged: (value) {
+                                setState(() {
+                                  _searchQuery = value;
+                                });
+                              },
+                              decoration: InputDecoration(
+                                hintText: 'Search products by name, SKU, or description...',
+                                hintStyle: TextStyle(
+                                  color: Colors.grey.shade400,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.normal,
+                                ),
+                                prefixIcon: Icon(
+                                  Iconsax.search_normal,
+                                  color: Colors.grey.shade500,
+                                  size: 20,
+                                ),
+                                suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      icon: Icon(
+                                        Icons.clear,
+                                        color: Colors.grey.shade500,
+                                        size: 20,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _searchController.clear();
+                                          _searchQuery = '';
+                                        });
+                                      },
+                                    )
+                                  : null,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                    width: 1,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: BorderSide(
+                                    color: Colors.orange.shade600,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                filled: true,
+                                fillColor: Colors.white,
+                              ),
+                            ),
                           ),
+                        ),
+                        const SizedBox(width: 16),
+                        ElevatedButton.icon(
                           onPressed: () {
                             showDialog(
                               context: context,
                               builder: (context) => AddProductDialog(
-                                initialCategoryId: selectedCategoryId,
+                                initialCategoryId: selectedCategoryId == 'all' ? '' : selectedCategoryId,
                                 categories: categoriesState.categories,
                               ),
                             );
                           },
-                          child: const Text("+ Add Product", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                        )
+                          icon: const Icon(Icons.add, size: 20),
+                          label: const Text(
+                            "Add Product",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange.shade900,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
