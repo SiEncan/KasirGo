@@ -51,9 +51,25 @@ class ProductNotifier extends StateNotifier<ProductState> {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
+
+  Future<void> addProduct(Map<String, dynamic> payload) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      await productService.createProduct(payload);
+
+      // Refresh daftar produk setelah penambahan
+      await fetchAllProducts();
+
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
+  }
 }
 
-// StateNotifierProvider untuk Riverpod
 final productProvider =
     StateNotifierProvider<ProductNotifier, ProductState>((ref) {
   return ProductNotifier(ref.read(productServiceProvider));
