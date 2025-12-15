@@ -10,14 +10,14 @@ class AuthService {
 
   AuthService({required this.tokenStorage});
 
-  Future<Map<String, dynamic>> login(String email, String password) async {
+  Future<Map<String, dynamic>> login(String username, String password) async {
     final url = Uri.parse("$baseUrl/auth/login/");
 
     final response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
-        "username": email,
+        "username": username,
         "password": password,
       }),
     );
@@ -85,6 +85,49 @@ class AuthService {
       return jsonBody['data'];
     } else {
       throw Exception("Failed to fetch profile: ${response.body}");
+    }
+  }
+
+  Future<Map<String, dynamic>> updateProfile({
+    required String userId,
+    String? username,
+    String? firstName,
+    String? lastName,
+    String? email,
+    String? phone,
+  }) async {
+    String? accessToken = await tokenStorage.getAccessToken();
+
+    if (accessToken == null || Jwt.isExpired(accessToken)) {
+      try {
+        await refreshAccessToken();
+        accessToken = await tokenStorage.getAccessToken();
+      } catch (e) {
+        throw Exception("Token expired, user harus login lagi");
+      }
+    }
+
+    final url = Uri.parse("$baseUrl/user/$userId/");
+    final response = await http.patch(
+      url,
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        if (username != null) 'username': username,
+        if (firstName != null) 'first_name': firstName,
+        if (lastName != null) 'last_name': lastName,
+        if (email != null) 'email': email,
+        if (phone != null) 'phone': phone,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final jsonBody = jsonDecode(response.body);
+      return jsonBody['data'];
+    } else {
+      throw Exception("Failed to update profile: ${response.body}");
     }
   }
 

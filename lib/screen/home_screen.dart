@@ -37,10 +37,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.dispose();
   }
 
+  int _getCategoryOrder(String categoryName) {
+    final name = categoryName.toLowerCase();
+    if (name.contains('main') || name.contains('course')) return 1;
+    if (name.contains('beverage') || name.contains('drink') || name.contains('coffee')) return 2;
+    if (name.contains('dessert') || name.contains('cake')) return 3;
+    return 999; // other categories at the end
+  }
+
   @override
   Widget build(BuildContext context) {
     final categoriesState = ref.watch(categoryProvider);
     final productsState = ref.watch(productProvider);
+
+    // Sort categories by custom order
+    final sortedCategories = List<Map<String, dynamic>>.from(categoriesState.categories)
+      ..sort((a, b) {
+        final orderA = _getCategoryOrder(a['name'] ?? '');
+        final orderB = _getCategoryOrder(b['name'] ?? '');
+        return orderA.compareTo(orderB);
+      });
 
     var filteredProducts = selectedCategoryId == 'all'
       ? productsState.products
@@ -244,7 +260,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               ),
                             ),
                             const SizedBox(width: 12),
-                            ...categoriesState.categories.map((category) {
+                            ...sortedCategories.map((category) {
                               final categoryId = category['id'];
                               final categoryName = (category['name'] ?? '').toString().toLowerCase();
                               final isSelected = selectedCategoryId == categoryId.toString();

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
 import 'package:kasir_go/component/products/dialogs/edit_product_dialog.dart';
 import 'package:kasir_go/providers/product_provider.dart';
@@ -48,6 +49,29 @@ class ProductTable extends ConsumerWidget {
               _buildHeaderCell('Action', flex: 3, isLast: true),
             ],
           ),
+          products.isEmpty ?
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Iconsax.box_remove,
+                  size: 80,
+                  color: Colors.grey.shade300,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No products found',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade500,
+                  ),
+                ),
+              ],
+            ),
+          ) :
           Expanded(
             child:ListView.builder(
               padding: EdgeInsets.zero,

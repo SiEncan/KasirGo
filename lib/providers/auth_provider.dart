@@ -19,12 +19,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier(this.authService, this.tokenStorage)
       : super(AuthState());
 
-  Future<bool> login(String email, String password) async {
+  Future<bool> login(String username, String password) async {
     state = AuthState(isLoading: true);
 
     try {
-      final result = await authService.login(email, password);
-
+      final result = await authService.login(username, password);
       await tokenStorage.saveTokens(
         result['access'],
         result['refresh'],
@@ -43,6 +42,34 @@ class AuthNotifier extends StateNotifier<AuthState> {
     await tokenStorage.clear();
     state = AuthState(); // reset state
   }
+
+  Future<void> updateProfile({
+    String? username,
+    String? firstName,
+    String? lastName,
+    String? email,
+    String? phone,
+  }) async {
+    state = AuthState(isLoading: true);
+
+    try {
+      final userId = await authService.getUserId();
+      if (userId == null) throw Exception("User not logged in");
+
+      await authService.updateProfile(
+        userId: userId,
+        username: username,
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        phone: phone,
+      );
+
+      state = AuthState(isLoading: false);
+    } catch (e) {
+      state = AuthState(isLoading: false, error: e.toString());
+    }
+  }
 }
 
 final authProvider =
@@ -57,12 +84,24 @@ final userProfileProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final authService = ref.read(authServiceProvider);
   final tokenStorage = ref.read(tokenStorageProvider);
 
-  final accessToken = await tokenStorage.getAccessToken();
-  if (accessToken == null) throw Exception("User not logged in");
+  try {
+    final accessToken = await tokenStorage.getAccessToken();
+    if (accessToken == null) throw Exception("User not logged in");
 
-  final userId = await authService.getUserId();
-  if (userId == null) throw Exception("User ID not found in token");
+    final userId = await authService.getUserId();
+    if (userId == null) throw Exception("User ID not found in token");
 
-  final profile = await authService.getProfile(userId);
-  return profile;
+    // Add timeout to prevent infinite loading
+    final profile = await authService.getProfile(userId).timeout(
+      const Duration(seconds: 15),
+      onTimeout: () {
+        throw Exception("Request timeout - Please check your connection");
+      },
+    );
+    
+    return profile;
+  } catch (e) {
+    print('Profile fetch error: $e');
+    rethrow;
+  }
 });
