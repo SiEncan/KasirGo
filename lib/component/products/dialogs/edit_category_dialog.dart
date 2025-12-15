@@ -215,22 +215,10 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         onPressed: () async {
-                          final confirm = await showDialog<bool>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text("Delete Category"),
-                              content: const Text("Are you sure you want to delete this category? This action cannot be undone."),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context, false),
-                                  child: const Text("Cancel"),
-                                ),
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context, true),
-                                  child: const Text("Delete", style: TextStyle(color: Colors.red)),
-                                ),
-                              ],
-                            ),
+                          final confirm = await showDeleteConfirmDialog(
+                            context,
+                            message: 'Are you sure you want to delete "${widget.category['name']}"? This action cannot be undone.',
+                            title: 'Delete Category',
                           );
                           
                           if (confirm == true && mounted) {
