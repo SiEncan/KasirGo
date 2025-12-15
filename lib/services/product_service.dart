@@ -5,6 +5,14 @@ import 'package:jwt_decode/jwt_decode.dart';
 import '../utils/token_storage.dart';
 import 'auth_service.dart';
 
+class ProductException implements Exception {
+  final String message;
+  ProductException(this.message);
+
+  @override
+  String toString() => message;
+}
+
 class ProductService {
   final String baseUrl = "http://10.0.2.2:8000/api";
   // final String baseUrl = "http://localhost:8000/api";
@@ -34,12 +42,16 @@ class ProductService {
       },
     );
 
-    final jsonBody = jsonDecode(response.body);
-
     if (response.statusCode == 200) {
-       return List<Map<String, dynamic>>.from(jsonBody['data']);
+      final jsonBody = jsonDecode(response.body);
+      return List<Map<String, dynamic>>.from(jsonBody['data']);
     } else {
-      throw Exception("Failed to fetch profile: ${response.body}");
+      try {
+        final errorJson = jsonDecode(response.body);
+        throw ProductException(errorJson['message'] ?? 'Gagal mengambil data produk');
+      } on FormatException {
+        throw ProductException('Gagal mengambil data produk');
+      }
     }
   }
 
@@ -84,7 +96,12 @@ class ProductService {
 
     if (response.statusCode != 201) {
       final body = await response.stream.bytesToString();
-      throw Exception("Failed to create product: $body");
+      try {
+        final errorJson = jsonDecode(body);
+        throw ProductException(errorJson['message'] ?? 'Gagal membuat produk');
+      } on FormatException {
+        throw ProductException('Gagal membuat produk');
+      }
     }
   }
 
@@ -129,7 +146,12 @@ class ProductService {
 
     if (response.statusCode != 200) {
       final body = await response.stream.bytesToString();
-      throw Exception("Failed to edit product: $body");
+      try {
+        final errorJson = jsonDecode(body);
+        throw ProductException(errorJson['message'] ?? 'Gagal mengubah produk');
+      } on FormatException {
+        throw ProductException('Gagal mengubah produk');
+      }
     }
   }
 
@@ -155,7 +177,12 @@ class ProductService {
     );
 
     if (response.statusCode != 200) {
-      throw Exception("Failed to delete product: ${response.body}");
+      try {
+        final errorJson = jsonDecode(response.body);
+        throw ProductException(errorJson['message'] ?? 'Gagal menghapus produk');
+      } on FormatException {
+        throw ProductException('Gagal menghapus produk');
+      }
     }
   }
 

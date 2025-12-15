@@ -7,9 +7,8 @@ final tokenStorageProvider = Provider((ref) => TokenStorage());
 
 class AuthState {
   final bool isLoading;
-  final String? error;
 
-  AuthState({this.isLoading = false, this.error});
+  AuthState({this.isLoading = false});
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
@@ -19,7 +18,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier(this.authService, this.tokenStorage)
       : super(AuthState());
 
-  Future<bool> login(String username, String password) async {
+  Future<void> login(String username, String password) async {
     state = AuthState(isLoading: true);
 
     try {
@@ -30,11 +29,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
 
       state = AuthState(isLoading: false);
-      return true;
-
     } catch (e) {
-      state = AuthState(isLoading: false, error: e.toString());
-      return false;
+      state = AuthState(isLoading: false);
+      rethrow; // Re-throw agar bisa di-catch di UI
     }
   }
 
@@ -67,7 +64,26 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       state = AuthState(isLoading: false);
     } catch (e) {
-      state = AuthState(isLoading: false, error: e.toString());
+      state = AuthState(isLoading: false);
+      rethrow; // Re-throw agar bisa di-catch di UI
+    }
+  }
+
+  Future<void> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    state = AuthState(isLoading: true);
+
+    try {
+      final userId = await authService.getUserId();
+      if (userId == null) throw Exception("User not logged in");
+
+      await authService.changePassword(userId: userId, oldPassword: oldPassword, newPassword: newPassword);
+      state = AuthState(isLoading: false);
+    } catch (e) {
+      state = AuthState(isLoading: false);
+      rethrow; // Re-throw agar bisa di-catch di UI
     }
   }
 }

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:kasir_go/providers/product_provider.dart';
+import 'package:kasir_go/utils/snackbar_helper.dart';
+import 'package:kasir_go/utils/dialog_helper.dart';
 
 class AddProductDialog extends ConsumerStatefulWidget {
   final String initialCategoryId;
@@ -22,117 +24,6 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
   final ImagePicker _picker = ImagePicker();
   XFile? _pickedImage;
 
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 400),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Error Icon with gradient background
-                Container(
-                  width: 70,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.red.shade400,
-                        Colors.red.shade600,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.red.shade200,
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.error_outline_rounded,
-                    color: Colors.white,
-                    size: 38,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                // Title
-                const Text(
-                  'Validation Error',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Message
-                Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Colors.grey.shade700,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // Action Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange.shade600,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Got it',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-  
   String _productName = '';
   String _productDescription = '';
   int _productPrice = 0;
@@ -513,23 +404,23 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
                     onPressed: () async {
                       // Validasi form
                       if (_productName.trim().isEmpty) {
-                        _showErrorDialog('Product name is required');
+                        showErrorDialog(context, 'Product name is required', title: 'Validation Error');
                         return;
                       }
                       if (_productSKU.trim().isEmpty) {
-                        _showErrorDialog('SKU is required');
+                        showErrorDialog(context, 'SKU is required', title: 'Validation Error');
                         return;
                       }
                       if (_productPrice <= 0) {
-                        _showErrorDialog('Price must be greater than 0');
+                        showErrorDialog(context, 'Price must be greater than 0', title: 'Validation Error');
                         return;
                       }
                       if (_productCost < 0) {
-                        _showErrorDialog('Cost cannot be negative');
+                        showErrorDialog(context, 'Cost cannot be negative', title: 'Validation Error');
                         return;
                       }
                       if (_productStock < 0) {
-                        _showErrorDialog('Stock cannot be negative');
+                        showErrorDialog(context, 'Stock cannot be negative', title: 'Validation Error');
                         return;
                       }
 
@@ -544,10 +435,16 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
                         "sku": _productSKU,
                         "category": _productCategory,
                       };
-                      await ref.read(productProvider.notifier).addProduct(payload).then((_) {
+
+                      try {
+                        await ref.read(productProvider.notifier).addProduct(payload);
                         if (!context.mounted) return;
                         Navigator.pop(context);
-                      });
+                        showSuccessSnackBar(context, 'Product added successfully');
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        showErrorSnackBar(context, 'Failed to add product: ${e.toString()}');
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange.shade600,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:kasir_go/providers/auth_provider.dart';
 import 'package:kasir_go/screen/pos_screen.dart';
+import 'package:kasir_go/utils/dialog_helper.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -14,107 +15,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
   bool _obscurePassword = true;
-
-  void _showErrorDialog(String title, String message) {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 400),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 70,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.red.shade400,
-                        Colors.red.shade600,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.error_outline_rounded,
-                    color: Colors.white,
-                    size: 38,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Colors.grey.shade700,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepOrange.shade400,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Got it',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
 
   @override
   Widget build(BuildContext context) {
@@ -377,40 +277,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         height: 56,
                         child: ElevatedButton(
                           onPressed: () async {
-                            // Validate input
                             if (usernameController.text.trim().isEmpty) {
-                              _showErrorDialog(
-                                'Username Required',
-                                'Please enter your username to continue',
-                              );
+                              showErrorDialog(context, 'Please enter your username to continue', title: 'Username Required');
                               return;
                             }
 
                             if (passwordController.text.trim().isEmpty) {
-                              _showErrorDialog(
-                                'Password Required',
-                                'Please enter your password to continue',
-                              );
+                              showErrorDialog(context, 'Please enter your password to continue', title: 'Password Required');
                               return;
                             }
 
-                            final success = await ref
-                                .read(authProvider.notifier)
-                                .login(
-                                  usernameController.text.trim(),
-                                  passwordController.text.trim(),
-                                );
+                            try {
+                              await ref.read(authProvider.notifier).login(
+                                usernameController.text.trim(),
+                                passwordController.text.trim(),
+                              );
 
-                            if (success) {
                               if (!context.mounted) return;
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
                                     builder: (_) => const POSScreen()),
                               );
-                            } else {
+                            } catch (e) {
                               if (!context.mounted) return;
-                              final errorMessage = authState.error ?? 'Login failed';
+                              final errorMessage = e.toString();
                               String title = 'Login Failed';
                               String message = 'Invalid username or password. Please try again.';
 
@@ -422,15 +313,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 title = 'Request Timeout';
                                 message = 'Server is taking too long to respond. Please try again.';
                               } else if (errorMessage.contains('401') ||
-                                  errorMessage.contains('Invalid credentials')) {
+                                  errorMessage.contains('Invalid credentials') ||
+                                  errorMessage.contains('Invalid')) {
                                 title = 'Invalid Credentials';
-                                message = 'Username or password is incorrect. Please check and try again.';
+                                message = errorMessage; // Tampilkan message dari backend
                               } else if (errorMessage.contains('500')) {
                                 title = 'Server Error';
                                 message = 'Server is experiencing issues. Please try again later.';
+                              } else {
+                                // Default: tampilkan error message dari backend
+                                title = 'Login Failed';
+                                message = errorMessage;
                               }
 
-                              _showErrorDialog(title, message);
+                              showErrorDialog(context, message, title: title);
                             }
                           },
                           style: ElevatedButton.styleFrom(

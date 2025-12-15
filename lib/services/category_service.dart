@@ -4,6 +4,14 @@ import 'package:jwt_decode/jwt_decode.dart';
 import '../utils/token_storage.dart';
 import 'auth_service.dart';
 
+class CategoryException implements Exception {
+  final String message;
+  CategoryException(this.message);
+
+  @override
+  String toString() => message;
+}
+
 class CategoryService {
   final String baseUrl = "http://10.0.2.2:8000/api";
   // final String baseUrl = "http://localhost:8000/api";
@@ -34,12 +42,16 @@ class CategoryService {
       },
     );
 
-    final jsonBody = jsonDecode(response.body);
-    
     if (response.statusCode == 200) {
+      final jsonBody = jsonDecode(response.body);
       return List<Map<String, dynamic>>.from(jsonBody['data']);
     } else {
-      throw Exception("Failed to fetch profile: ${response.body}");
+      try {
+        final errorJson = jsonDecode(response.body);
+        throw CategoryException(errorJson['message'] ?? 'Gagal mengambil data kategori');
+      } on FormatException {
+        throw CategoryException('Gagal mengambil data kategori');
+      }
     }
   }
 
@@ -66,7 +78,12 @@ class CategoryService {
     );
 
     if (response.statusCode != 201) {
-      throw Exception("Failed to create category: ${response.body}");
+      try {
+        final errorJson = jsonDecode(response.body);
+        throw CategoryException(errorJson['message'] ?? 'Gagal membuat kategori');
+      } on FormatException {
+        throw CategoryException('Gagal membuat kategori');
+      }
     }
   }
 
@@ -93,7 +110,12 @@ class CategoryService {
     );
 
     if (response.statusCode != 200) {
-      throw Exception("Failed to edit category: ${response.body}");
+      try {
+        final errorJson = jsonDecode(response.body);
+        throw CategoryException(errorJson['message'] ?? 'Gagal mengubah kategori');
+      } on FormatException {
+        throw CategoryException('Gagal mengubah kategori');
+      }
     }
   }
 
@@ -119,7 +141,12 @@ class CategoryService {
     );
 
     if (response.statusCode != 200) {
-      throw Exception("Failed to delete category: ${response.body}");
+      try {
+        final errorJson = jsonDecode(response.body);
+        throw CategoryException(errorJson['message'] ?? 'Gagal menghapus kategori');
+      } on FormatException {
+        throw CategoryException('Gagal menghapus kategori');
+      }
     }
   }
 

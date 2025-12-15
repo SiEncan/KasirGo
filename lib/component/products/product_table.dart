@@ -4,6 +4,7 @@ import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
 import 'package:kasir_go/component/products/dialogs/edit_product_dialog.dart';
 import 'package:kasir_go/providers/product_provider.dart';
+import 'package:kasir_go/utils/snackbar_helper.dart';
 
 class ProductTable extends ConsumerWidget {
   final List<Map<String, dynamic>> products;
@@ -517,7 +518,16 @@ class ProductTable extends ConsumerWidget {
                 );
 
                 if (confirm == true && context.mounted) {
-                  await ref.read(productProvider.notifier).deleteProduct(product['id']);
+                  try {
+                    await ref.read(productProvider.notifier).deleteProduct(product['id']);
+                    if (context.mounted) {
+                      showSuccessSnackBar(context, 'Product deleted successfully');
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      showErrorSnackBar(context, 'Product deletion failed: ${e.toString()}');
+                    }
+                  }
                 }
               },
               child: Row(

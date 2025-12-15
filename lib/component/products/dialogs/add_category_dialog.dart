@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir_go/providers/category_provider.dart';
+import 'package:kasir_go/utils/snackbar_helper.dart';
+import 'package:kasir_go/utils/dialog_helper.dart';
 
 class AddCategoryDialog extends ConsumerStatefulWidget {
   const AddCategoryDialog({super.key});
@@ -12,110 +14,6 @@ class AddCategoryDialog extends ConsumerStatefulWidget {
 class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController descController = TextEditingController();
-
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 400),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Error Icon with gradient background
-                Container(
-                  width: 70,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.red.shade400,
-                        Colors.red.shade600,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.error_outline_rounded,
-                    color: Colors.white,
-                    size: 38,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                // Title
-                const Text(
-                  'Validation Error',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Message
-                Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Colors.grey.shade700,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // Action Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange.shade600,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Got it',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   @override
   void dispose() {
@@ -372,7 +270,7 @@ class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
                     onPressed: () async {
                       // Validasi form
                       if (nameController.text.trim().isEmpty) {
-                        _showErrorDialog('Category name is required');
+                        showErrorDialog(context, 'Category name is required', title: 'Validation Error');
                         return;
                       }
 
@@ -381,13 +279,15 @@ class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
                         'description': descController.text,
                       };
 
-                      await ref
-                          .read(categoryProvider.notifier)
-                          .addCategory(newCategory)
-                          .then((_) {
+                      try {
+                        await ref.read(categoryProvider.notifier).addCategory(newCategory);
                         if (!context.mounted) return;
                         Navigator.pop(context);
-                      });
+                        showSuccessSnackBar(context, 'Category added successfully');
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        showErrorSnackBar(context, 'Failed to add category: ${e.toString()}');
+                      }
                     },
                     icon: const Icon(Icons.add, size: 18),
                     label: const Text("Create Category"),

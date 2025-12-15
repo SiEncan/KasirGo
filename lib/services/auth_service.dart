@@ -3,6 +3,14 @@ import 'package:http/http.dart' as http;
 import 'package:jwt_decode/jwt_decode.dart';
 import '../utils/token_storage.dart';
 
+class AuthException implements Exception {
+  final String message;
+  AuthException(this.message);
+  
+  @override
+  String toString() => message; // Tanpa prefix "Exception:"
+}
+
 class AuthService {
   final String baseUrl = "http://10.0.2.2:8000/api";
   // final String baseUrl = "http://localhost:8000/api";
@@ -25,7 +33,15 @@ class AuthService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw Exception("Login failed: ${response.body}");
+      try {
+        final errorJson = jsonDecode(response.body);
+        if (errorJson['detail'] == 'No active account found with the given credentials') {
+          throw AuthException('Username or password is wrong');
+        }
+        throw AuthException(errorJson['detail']);
+      } on FormatException {
+        throw AuthException('Login gagal');
+      }
     }
   }
 
@@ -128,6 +144,57 @@ class AuthService {
       return jsonBody['data'];
     } else {
       throw Exception("Failed to update profile: ${response.body}");
+    }
+  }
+
+  Future<void> changePassword({
+    required String userId,
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    String? accessToken = await tokenStorage.getAccessToken();
+
+    if (accessToken == null || Jwt.isExpired(accessToken)) {
+      try {
+        await refreshAccessToken();
+        accessToken = await tokenStorage.getAccessToken();
+      } catch (e) {
+        throw Exception("Token expired, user harus login lagi");
+      }
+    }
+
+    final url = Uri.parse("$baseUrl/user/$userId/change-password/");
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'old_password': oldPassword,
+        'new_password': newPassword,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      // Debug: Print response untuk lihat format sebenarnya
+      print('=== Change Password Error Debug ===');
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+      print('Response Body Type: ${response.body.runtimeType}');
+      
+      try {
+        final errorData = jsonDecode(response.body);
+        print('Parsed JSON successfully: $errorData');
+        final errorMessage = errorData['message'] ?? 'Failed to change password';
+        print('Error message extracted: $errorMessage');
+        throw AuthException(errorMessage);
+      } on FormatException catch (e) {
+        // Jika JSON parse gagal
+        print('JSON parse failed with FormatException: $e');
+        throw AuthException("Failed to change password: ${response.body}");
+      }
+      // Exception dari throw AuthException(errorMessage) akan langsung propagate ke caller
     }
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:kasir_go/utils/dialog_helper.dart';
 import '../providers/auth_provider.dart';
 import 'login_screen.dart';
 
@@ -13,11 +14,18 @@ class ProfileScreen extends ConsumerStatefulWidget {
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _isEditing = false;
+  bool _isChangingPassword = false;
+  bool _obscureOldPassword = true;
+  bool _obscureNewPassword = true;
+  bool _obscureConfirmPassword = true;
   late TextEditingController _usernameController;
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
+  final TextEditingController _oldPasswordController = TextEditingController();
+  final TextEditingController _newPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
   @override
   void dispose() {
@@ -26,183 +34,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _lastNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _oldPasswordController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
-  }
-
-  void _showSuccessDialog(String title, String message) {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 400),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 70,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.green.shade400, Colors.green.shade600],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.green.shade200,
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(Iconsax.tick_circle, color: Colors.white, size: 38),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 15, color: Colors.grey.shade700, height: 1.5),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepOrange.shade400,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text(
-                      'Got it',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: 0.5),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showErrorDialog(String title, String message) {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 400),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 70,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.red.shade400, Colors.red.shade600],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.red.shade200,
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(Icons.error_outline_rounded, color: Colors.white, size: 38),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 15, color: Colors.grey.shade700, height: 1.5),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepOrange.shade400,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text(
-                      'Got it',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: 0.5),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 
   @override
@@ -214,16 +49,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       body: profileAsync.when(
         data: (profile) {
           final username = profile['username'] ?? '-';
-          final first_name = profile['first_name'] ?? '-';
-          final last_name = profile['last_name'] ?? '-';
+          final firstName = profile['first_name'] ?? '-';
+          final lastName = profile['last_name'] ?? '-';
           final email = profile['email'] ?? '-';
           final phone = profile['phone'] ?? '-';
           final role = profile['role'] ?? '-';
 
           if (!_isEditing) {
             _usernameController = TextEditingController(text: username);
-            _firstNameController = TextEditingController(text: first_name);
-            _lastNameController = TextEditingController(text: last_name);
+            _firstNameController = TextEditingController(text: firstName);
+            _lastNameController = TextEditingController(text: lastName);
             _emailController = TextEditingController(text: email);
             _phoneController = TextEditingController(text: phone);
           }
@@ -274,7 +109,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          username,
+                          '$firstName $lastName',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -337,6 +172,55 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           ),
                         ),
                       ),
+
+                        const SizedBox(height: 16),
+
+                        // Change Password Card
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.shade200,
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      _isChangingPassword ? 'Change Password' : 'Security',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey.shade900,
+                                      ),
+                                    ),
+                                    if (!_isChangingPassword)
+                                      IconButton(
+                                        icon: Icon(Iconsax.lock, color: Colors.deepOrange.shade400),
+                                        onPressed: () {
+                                          setState(() {
+                                            _isChangingPassword = true;
+                                          });
+                                        },
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                _buildPasswordForm(),
+                              ],
+                            ),
+                          ),
+                        ),
 
                         const SizedBox(height: 16),
 
@@ -757,15 +641,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   onPressed: () async {
                   // Validation
                   if (_usernameController.text.trim().isEmpty) {
-                    _showErrorDialog('Username Required', 'Please enter a username');
+                    showErrorDialog(context, 'Please enter a username', title:'Username Required');
                     return;
                   }
+                  if (_firstNameController.text.trim().isEmpty || _lastNameController.text.trim().isEmpty) {
+                    showErrorDialog(context, 'Please enter your first name and last name', title:'Name Required');
+                    return;
+                  }
+
                   if (_emailController.text.trim().isEmpty) {
-                    _showErrorDialog('Email Required', 'Please enter an email address');
+                    showErrorDialog(context, 'Please enter an email address', title:'Email Required');
                     return;
                   }
                   if (!_emailController.text.contains('@')) {
-                    _showErrorDialog('Invalid Email', 'Please enter a valid email address');
+                    showErrorDialog(context, 'Please enter a valid email address', title:'Invalid Email');
                     return;
                   }
 
@@ -786,16 +675,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     
                     ref.invalidate(userProfileProvider);
                     
-                    _showSuccessDialog(
-                      'Profile Updated',
-                      'Your profile has been updated successfully',
-                    );
+                    if (!context.mounted) return;
+                    showSuccessDialog(context, 'Your profile has been updated successfully', title: 'Profile Updated');
                   } catch (e) {
                     if (!context.mounted) return;
-                    _showErrorDialog(
-                      'Update Failed',
-                      e.toString(),
-                    );
+                    showErrorDialog(context, e.toString(), title: 'Update Failed');
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -807,6 +691,286 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 child: const Text(
                   'Save Changes',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPasswordForm() {
+    if (!_isChangingPassword) {
+      return Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.deepOrange.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Iconsax.lock, color: Colors.deepOrange.shade400, size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Password',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade600,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '••••••••',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Current Password',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _oldPasswordController,
+          obscureText: _obscureOldPassword,
+          decoration: InputDecoration(
+            hintText: 'Enter current password',
+            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 15),
+            prefixIcon: Icon(Iconsax.lock, color: Colors.grey.shade500),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscureOldPassword ? Iconsax.eye_slash : Iconsax.eye,
+                color: Colors.grey.shade500,
+              ),
+              onPressed: () {
+                setState(() {
+                  _obscureOldPassword = !_obscureOldPassword;
+                });
+              },
+            ),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.deepOrange.shade400, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+          style: const TextStyle(fontSize: 15),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'New Password',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _newPasswordController,
+          obscureText: _obscureNewPassword,
+          decoration: InputDecoration(
+            hintText: 'Enter new password',
+            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 15),
+            prefixIcon: Icon(Iconsax.lock_1, color: Colors.grey.shade500),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscureNewPassword ? Iconsax.eye_slash : Iconsax.eye,
+                color: Colors.grey.shade500,
+              ),
+              onPressed: () {
+                setState(() {
+                  _obscureNewPassword = !_obscureNewPassword;
+                });
+              },
+            ),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.deepOrange.shade400, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+          style: const TextStyle(fontSize: 15),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Confirm New Password',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _confirmPasswordController,
+          obscureText: _obscureConfirmPassword,
+          decoration: InputDecoration(
+            hintText: 'Confirm new password',
+            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 15),
+            prefixIcon: Icon(Iconsax.lock_1, color: Colors.grey.shade500),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscureConfirmPassword ? Iconsax.eye_slash : Iconsax.eye,
+                color: Colors.grey.shade500,
+              ),
+              onPressed: () {
+                setState(() {
+                  _obscureConfirmPassword = !_obscureConfirmPassword;
+                });
+              },
+            ),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.deepOrange.shade400, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+          style: const TextStyle(fontSize: 15),
+        ),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {
+                  setState(() {
+                    _isChangingPassword = false;
+                    _oldPasswordController.clear();
+                    _newPasswordController.clear();
+                    _confirmPasswordController.clear();
+                    _obscureOldPassword = true;
+                    _obscureNewPassword = true;
+                    _obscureConfirmPassword = true;
+                  });
+                },
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: BorderSide(color: Colors.grey.shade400),
+                  foregroundColor: Colors.grey.shade700,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () async {
+                  // Validation
+                  if (_oldPasswordController.text.trim().isEmpty) {
+                    showErrorDialog(context, 'Please enter your current password', title:'Current Password Required');
+                    return;
+                  }
+                  if (_newPasswordController.text.trim().isEmpty) {
+                    showErrorDialog(context, 'Please enter a new password', title:'New Password Required');
+                    return;
+                  }
+                  if (_newPasswordController.text.trim().length < 8) {
+                    showErrorDialog(context, 'Password must be at least 8 characters', title:'Weak Password');
+                    return;
+                  }
+                  if (_newPasswordController.text != _confirmPasswordController.text) {
+                    showErrorDialog(context, 'New password and confirmation do not match', title:'Password Mismatch');
+                    return;
+                  }
+
+                  try {
+                    await ref.read(authProvider.notifier).changePassword(
+                      oldPassword: _oldPasswordController.text.trim(),
+                      newPassword: _newPasswordController.text.trim(),
+                    );
+                    
+                    if (!context.mounted) return;
+                    setState(() {
+                      _isChangingPassword = false;
+                      _oldPasswordController.clear();
+                      _newPasswordController.clear();
+                      _confirmPasswordController.clear();
+                      _obscureOldPassword = true;
+                      _obscureNewPassword = true;
+                      _obscureConfirmPassword = true;
+                    });
+                      
+                    if (!context.mounted) return;
+                    showSuccessDialog(context, 'Your password has been changed successfully', title: 'Password Updated');
+                  
+                  } catch (e) {
+                    if (!context.mounted) return;
+                    showErrorDialog(
+                      context,
+                      e.toString(),
+                      title: 'Update Failed',
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepOrange.shade400,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text(
+                  'Update Password',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: 0.5),
                 ),
               ),
