@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kasir_go/providers/cart_provider.dart';
+import 'package:kasir_go/utils/currency_helper.dart';
 
-class OrderDetails extends StatelessWidget {
+class OrderDetails extends ConsumerWidget {
+
   const OrderDetails({
     super.key,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cartItems = ref.watch(cartProvider);
+
     return Expanded(
       flex: 2,
       child: Container(
@@ -43,7 +49,9 @@ class OrderDetails extends StatelessWidget {
                     ),
                   ),
                   child: InkWell(
-                    onTap: () {},
+                    onTap: () {
+                      ref.read(cartProvider.notifier).clearCart();
+                    },
                     child: const Row(
                       children: [
                         Padding(
@@ -73,7 +81,7 @@ class OrderDetails extends StatelessWidget {
     
             Expanded(
               child: ListView.builder(
-                itemCount: 5,
+                itemCount: cartItems.length,
                 itemBuilder: (context, index) {
                   return Container(
                     margin: const EdgeInsets.only(bottom: 16),
@@ -89,9 +97,9 @@ class OrderDetails extends StatelessWidget {
                           height: 80,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8),
-                            image: const DecorationImage(
+                            image: DecorationImage(
                               image: NetworkImage(
-                                "https://wrapsnbeyond.com/wp-content/uploads/2025/02/classic-burger.webp",
+                                ("http://10.0.2.2:8000${cartItems[index].product['image']}"),
                               ),
                               fit: BoxFit.cover,
                             ),
@@ -104,9 +112,9 @@ class OrderDetails extends StatelessWidget {
                             crossAxisAlignment:
                                 CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                "Burger Enak",
-                                style: TextStyle(
+                              Text(
+                                cartItems[index].product['name'],
+                                style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -116,9 +124,9 @@ class OrderDetails extends StatelessWidget {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text(
-                                    "Rp 25.000",
-                                    style: TextStyle(
+                                  Text(
+                                    CurrencyHelper.formatIDR(cartItems[index].totalPrice),
+                                    style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -128,7 +136,9 @@ class OrderDetails extends StatelessWidget {
                                     children: [
                                       InkWell(
                                         onTap: () {
-    
+                                          ref.read(cartProvider.notifier).decreaseQuantity(
+                                            cartItems[index],
+                                          );
                                         },
                                         child: Container(
                                           padding:
@@ -145,14 +155,16 @@ class OrderDetails extends StatelessWidget {
                                         ),
                                       ),
                                       const SizedBox(width: 8),
-                                      const Text(
-                                        "1",
-                                        style: TextStyle(fontSize: 16),
+                                      Text(
+                                        cartItems[index].quantity.toString(),
+                                        style: const TextStyle(fontSize: 16),
                                       ),
                                       const SizedBox(width: 8),
                                       InkWell(
                                         onTap: () {
-                                          // TODO: tambah qty
+                                          ref.read(cartProvider.notifier).increaseQuantity(
+                                            cartItems[index],
+                                          );
                                         },
                                         child: Container(
                                           padding:
@@ -179,46 +191,152 @@ class OrderDetails extends StatelessWidget {
                   );
                 },
               ),
+              //   itemCount: 5,
+              //   itemBuilder: (context, index) {
+              //     return Container(
+              //       margin: const EdgeInsets.only(bottom: 16),
+              //       padding: const EdgeInsets.all(12),
+              //       decoration: BoxDecoration(
+              //         border: Border.all(color: Colors.grey.shade300),
+              //         borderRadius: BorderRadius.circular(12),
+              //       ),
+              //       child: Row(
+              //         children: [
+              //           Container(
+              //             width: 80,
+              //             height: 80,
+              //             decoration: BoxDecoration(
+              //               borderRadius: BorderRadius.circular(8),
+              //               image: const DecorationImage(
+              //                 image: NetworkImage(
+              //                   "https://wrapsnbeyond.com/wp-content/uploads/2025/02/classic-burger.webp",
+              //                 ),
+              //                 fit: BoxFit.cover,
+              //               ),
+              //             ),
+              //           ),
+              //           const SizedBox(width: 12),
+    
+              //           Expanded(
+              //             child: Column(
+              //               crossAxisAlignment:
+              //                   CrossAxisAlignment.start,
+              //               children: [
+              //                 const Text(
+              //                   "Burger Enak",
+              //                   style: TextStyle(
+              //                     fontSize: 18,
+              //                     fontWeight: FontWeight.w600,
+              //                   ),
+              //                 ),
+              //                 const SizedBox(height: 8),
+              //                 Row(
+              //                   mainAxisAlignment:
+              //                       MainAxisAlignment.spaceBetween,
+              //                   children: [
+              //                     const Text(
+              //                       "Rp 25.000",
+              //                       style: TextStyle(
+              //                         fontSize: 16,
+              //                         fontWeight: FontWeight.w700,
+              //                       ),
+              //                     ),
+    
+              //                     Row(
+              //                       children: [
+              //                         InkWell(
+              //                           onTap: () {
+    
+              //                           },
+              //                           child: Container(
+              //                             padding:
+              //                                 const EdgeInsets.all(6),
+              //                             decoration: BoxDecoration(
+              //                               color: Colors.grey.shade200,
+              //                               borderRadius:
+              //                                   BorderRadius.circular(
+              //                                       6),
+              //                             ),
+              //                             child: const Icon(
+              //                                 Icons.remove,
+              //                                 size: 18),
+              //                           ),
+              //                         ),
+              //                         const SizedBox(width: 8),
+              //                         const Text(
+              //                           "1",
+              //                           style: TextStyle(fontSize: 16),
+              //                         ),
+              //                         const SizedBox(width: 8),
+              //                         InkWell(
+              //                           onTap: () {
+              //                             // TODO: tambah qty
+              //                           },
+              //                           child: Container(
+              //                             padding:
+              //                                 const EdgeInsets.all(6),
+              //                             decoration: BoxDecoration(
+              //                               color: Colors.grey.shade200,
+              //                               borderRadius:
+              //                                   BorderRadius.circular(
+              //                                       6),
+              //                             ),
+              //                             child: const Icon(Icons.add,
+              //                                 size: 18),
+              //                           ),
+              //                         ),
+              //                       ],
+              //                     ),
+              //                   ],
+              //                 ),
+              //               ],
+              //             ),
+              //           ),
+              //         ],
+              //       ),
+              //     );
+              //   },
+              // ),
             ),
             const SizedBox(height: 8),
     
-            const Column(
+            Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("Subtotal"),
-                    Text("Rp 125.000"),
+                    const Text("Subtotal"),
+                    Text(CurrencyHelper.formatIDR(ref.read(cartProvider.notifier).getTotalCartPrice().toString())),
                   ],
                 ),
-                SizedBox(height: 6),
+                const SizedBox(height: 6),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("Tax (10%)"),
-                    Text("Rp 12.500"),
+                    const Text("Tax (10%)"),
+                    Text(CurrencyHelper.formatIDR((ref.read(cartProvider.notifier).getTotalCartPrice() * 0.1).toString())),
                   ],
                 ),
-                SizedBox(height: 6),
+                const SizedBox(height: 6),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("Service Charges"),
-                    Text("Rp 2.000"),
+                    const Text("Service Charges"),
+                    Text(CurrencyHelper.formatIDR("2000")),
                   ],
                 ),
-                Divider(height: 24),
+                const Divider(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
+                    const Text(
                       "Total",
                       style: TextStyle(
                           fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      "Rp 139.500",
-                      style: TextStyle(
+                      CurrencyHelper.formatIDR((ref.read(cartProvider.notifier).getTotalCartPrice() + ref.read(cartProvider.notifier).getTotalCartPrice() * 0.1 + 2000).toString()),
+                      style: const TextStyle(
                           fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                   ],

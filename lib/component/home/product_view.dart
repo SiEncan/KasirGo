@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kasir_go/providers/cart_provider.dart';
+import 'package:kasir_go/utils/currency_helper.dart';
 
-class ProductView extends StatelessWidget {
+class ProductView extends ConsumerWidget {
   final List<Map<String, dynamic>> products;
 
   const ProductView({
@@ -9,18 +11,8 @@ class ProductView extends StatelessWidget {
     required this.products,
   });
 
-  String _formatPrice(String price) {
-    double priceValue = double.tryParse(price) ?? 0.0;
-    final formatter = NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: '',
-      decimalDigits: 0,
-    );
-    return formatter.format(priceValue);
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SliverPadding(
       padding: const EdgeInsets.only(top: 4, left: 16, right: 16, bottom: 24),
       sliver: SliverGrid(
@@ -49,6 +41,13 @@ class ProductView extends StatelessWidget {
             ),
             onPressed: () {
               // TODO: tambahkan ke cart
+              ref.read(cartProvider.notifier).addCartItem(
+                CartState(
+                  product: product,
+                  quantity: 1,
+                  totalPrice: double.tryParse(price) ?? 0.0,
+                ),
+              );
               print("ADD PRODUCT: ${product['name']}");
             },
             child: Container(
@@ -76,7 +75,7 @@ class ProductView extends StatelessWidget {
                       width: double.infinity,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
-                        color: Colors.grey.shade100,
+                        color: imageUrl != null ?Colors.transparent : Colors.grey.shade200,
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
@@ -123,7 +122,7 @@ class ProductView extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Rp ${_formatPrice(price)}',
+                    CurrencyHelper.formatIDR(price),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,

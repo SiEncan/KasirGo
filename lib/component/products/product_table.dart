@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:intl/intl.dart';
 import 'package:kasir_go/component/products/dialogs/edit_product_dialog.dart';
 import 'package:kasir_go/providers/product_provider.dart';
+import 'package:kasir_go/utils/currency_helper.dart';
 import 'package:kasir_go/utils/snackbar_helper.dart';
 import 'package:kasir_go/utils/dialog_helper.dart';
 import 'package:kasir_go/utils/session_helper.dart';
@@ -17,17 +17,6 @@ class ProductTable extends ConsumerWidget {
     required this.products,
     required this.categories,
   });
-
-  String formatPrice(String price) {
-    double priceValue = double.tryParse(price) ?? 0.0;
-
-    final formatter = NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: '',
-      decimalDigits: 0,
-    );
-    return formatter.format(priceValue);
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -297,7 +286,7 @@ class ProductTable extends ConsumerWidget {
         ),
         child: Center(
           child: Text(
-            'Rp${formatPrice(product['price'])}',
+            CurrencyHelper.formatIDR(product['price']),
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
@@ -324,7 +313,7 @@ class ProductTable extends ConsumerWidget {
         ),
         child: Center(
           child: Text(
-            'Rp${formatPrice(product['cost'])}',
+            CurrencyHelper.formatIDR(product['cost']),
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
