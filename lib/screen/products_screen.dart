@@ -80,6 +80,7 @@ class _ManageProductsScreenState extends ConsumerState<ManageProductsScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
+        bottom: false,
         child: Row(
           children: [
             Container(

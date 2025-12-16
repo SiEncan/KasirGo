@@ -43,7 +43,7 @@ class AuthService {
         }
         throw AuthException(errorJson['detail']);
       } on FormatException {
-        throw AuthException('Login gagal');
+        throw AuthException('Login failed');
       }
     }
   }

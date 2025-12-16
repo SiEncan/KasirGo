@@ -25,10 +25,10 @@ class CategoryService {
       }
       
       if (e.response != null) {
-        final errorMessage = e.response?.data['message'] ?? 'Gagal mengambil data kategori';
+        final errorMessage = e.response?.data['message'] ?? 'Failed to fetch categories';
         throw CategoryException(errorMessage);
       } else {
-        throw CategoryException('Gagal mengambil data kategori');
+        throw CategoryException('Failed to fetch categories');
       }
     }
   }
@@ -43,10 +43,10 @@ class CategoryService {
       }
       
       if (e.response != null) {
-        final errorMessage = e.response?.data['message'] ?? 'Gagal membuat kategori';
+        final errorMessage = e.response?.data['message'] ?? 'Failed to create category';
         throw CategoryException(errorMessage);
       } else {
-        throw CategoryException('Gagal membuat kategori');
+        throw CategoryException('Failed to create category');
       }
     }
   }
@@ -61,10 +61,10 @@ class CategoryService {
       }
       
       if (e.response != null) {
-        final errorMessage = e.response?.data['message'] ?? 'Gagal mengubah kategori';
+        final errorMessage = e.response?.data['message'] ?? 'Failed to edit category';
         throw CategoryException(errorMessage);
       } else {
-        throw CategoryException('Gagal mengubah kategori');
+        throw CategoryException('Failed to edit category');
       }
     }
   }
@@ -79,10 +79,10 @@ class CategoryService {
       }
       
       if (e.response != null) {
-        final errorMessage = e.response?.data['message'] ?? 'Gagal menghapus kategori';
+        final errorMessage = e.response?.data['message'] ?? 'Failed to delete category';
         throw CategoryException(errorMessage);
       } else {
-        throw CategoryException('Gagal menghapus kategori');
+        throw CategoryException('Failed to delete category');
       }
     }
   }

@@ -26,10 +26,10 @@ class ProductService {
       }
       
       if (e.response != null) {
-        final errorMessage = e.response?.data['message'] ?? 'Gagal mengambil data produk';
+        final errorMessage = e.response?.data['message'] ?? 'Failed to fetch products';
         throw ProductException(errorMessage);
       } else {
-        throw ProductException('Gagal mengambil data produk');
+        throw ProductException('Failed to fetch products');
       }
     }
   }
@@ -65,10 +65,10 @@ class ProductService {
       }
       
       if (e.response != null) {
-        final errorMessage = e.response?.data['message'] ?? 'Gagal membuat produk';
+        final errorMessage = e.response?.data['message'] ?? 'Failed to create product';
         throw ProductException(errorMessage);
       } else {
-        throw ProductException('Gagal membuat produk');
+        throw ProductException('Failed to create product');
       }
     }
   }
@@ -104,10 +104,10 @@ class ProductService {
       }
       
       if (e.response != null) {
-        final errorMessage = e.response?.data['message'] ?? 'Gagal mengubah produk';
+        final errorMessage = e.response?.data['message'] ?? 'Failed to edit product';
         throw ProductException(errorMessage);
       } else {
-        throw ProductException('Gagal mengubah produk');
+        throw ProductException('Failed to edit product');
       }
     }
   }
@@ -122,10 +122,10 @@ class ProductService {
       }
       
       if (e.response != null) {
-        final errorMessage = e.response?.data['message'] ?? 'Gagal menghapus produk';
+        final errorMessage = e.response?.data['message'] ?? 'Failed to delete product';
         throw ProductException(errorMessage);
       } else {
-        throw ProductException('Gagal menghapus produk');
+        throw ProductException('Failed to delete product');
       }
     }
   }

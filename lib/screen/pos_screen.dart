@@ -68,31 +68,6 @@ class _POSScreenState extends State<POSScreen> {
     );
   }
 
-  Widget _buildProductsScreen() {
-
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          color: Colors.deepOrange.shade600,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Products & Cart',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-    ]);
-  }
-
   Widget _buildSettingsScreen() {
     return Padding(
       padding: const EdgeInsets.all(24),
