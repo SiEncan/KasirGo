@@ -105,26 +105,27 @@ class ProductView extends ConsumerWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 17,
                       fontWeight: FontWeight.w600,
                       color: Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    product['description'] ?? '',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
+                  product['description'] != null && product['description'].isNotEmpty ? 
+                    Text(
+                      product['description'],
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade600,
+                      ),
+                    ) : const SizedBox.shrink(),
                   const SizedBox(height: 8),
                   Text(
                     CurrencyHelper.formatIDR(price),
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.deepOrange.shade600,
                     ),

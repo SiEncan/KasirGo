@@ -117,10 +117,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           });
 
     var filteredProducts = selectedCategoryId == 'all'
-        ? productsState.products
+        ? productsState.products.where((product) => product['is_available'] == true).toList()
         : productsState.products
             .where((product) =>
-                product['category'].toString() == selectedCategoryId)
+                product['category'].toString() == selectedCategoryId && product['is_available'] == true)
             .toList();
 
     if (_searchQuery.isNotEmpty) {

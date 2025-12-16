@@ -97,9 +97,8 @@ class CategorySection extends SliverPersistentHeaderDelegate {
                       final itemCount = productsState.products
                           .where((product) =>
                               product['category'].toString() ==
-                              categoryId.toString())
+                              categoryId.toString() && product['is_available'] == true)
                           .length;
-
                       return Padding(
                         padding: const EdgeInsets.only(right: 12),
                         child: _buildCategoryButton(

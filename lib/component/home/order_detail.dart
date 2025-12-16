@@ -6,7 +6,6 @@ import 'package:kasir_go/providers/cart_provider.dart';
 import 'package:kasir_go/utils/currency_helper.dart';
 
 class OrderDetails extends ConsumerWidget {
-
   const OrderDetails({
     super.key,
   });
@@ -28,21 +27,19 @@ class OrderDetails extends ConsumerWidget {
                   'assets/icons/note.svg',
                   width: 24,
                   height: 24,
-                  colorFilter: ColorFilter.mode(
-                      Colors.grey.shade600, BlendMode.srcIn),
+                  colorFilter:
+                      ColorFilter.mode(Colors.grey.shade600, BlendMode.srcIn),
                 ),
                 const SizedBox(width: 8),
                 const Text(
                   'Order Details',
-                  style: TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    borderRadius:
-                        const BorderRadius.all(Radius.circular(8)),
+                    borderRadius: const BorderRadius.all(Radius.circular(8)),
                     border: Border.all(
                       color: Colors.grey.shade400,
                       width: 1.5,
@@ -76,9 +73,7 @@ class OrderDetails extends ConsumerWidget {
                 ),
               ],
             ),
-    
             const Divider(height: 50),
-    
             Expanded(
               child: ListView.builder(
                 itemCount: cartItems.length,
@@ -92,25 +87,37 @@ class OrderDetails extends ConsumerWidget {
                     ),
                     child: Row(
                       children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            image: DecorationImage(
-                              image: NetworkImage(
-                                ("http://10.0.2.2:8000${cartItems[index].product['image']}"),
+                        cartItems[index].product['image'] != null
+                            ? Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  image: DecorationImage(
+                                    image: NetworkImage(
+                                      ("http://10.0.2.2:8000${cartItems[index].product['image']}"),
+                                    ),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              )
+                            : Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  color: Colors.grey.shade200,
+                                ),
+                                child: Icon(
+                                  Icons.restaurant,
+                                  size: 32,
+                                  color: Colors.grey.shade400,
+                                ),
                               ),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
                         const SizedBox(width: 12),
-    
                         Expanded(
                           child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 cartItems[index].product['name'],
@@ -125,32 +132,31 @@ class OrderDetails extends ConsumerWidget {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    CurrencyHelper.formatIDR(cartItems[index].totalPrice),
+                                    CurrencyHelper.formatIDR(
+                                        cartItems[index].totalPrice),
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
-    
                                   Row(
                                     children: [
                                       InkWell(
                                         onTap: () {
-                                          ref.read(cartProvider.notifier).decreaseQuantity(
-                                            cartItems[index],
-                                          );
+                                          ref
+                                              .read(cartProvider.notifier)
+                                              .decreaseQuantity(
+                                                cartItems[index],
+                                              );
                                         },
                                         child: Container(
-                                          padding:
-                                              const EdgeInsets.all(6),
+                                          padding: const EdgeInsets.all(6),
                                           decoration: BoxDecoration(
                                             color: Colors.grey.shade200,
                                             borderRadius:
-                                                BorderRadius.circular(
-                                                    6),
+                                                BorderRadius.circular(6),
                                           ),
-                                          child: const Icon(
-                                              Icons.remove,
+                                          child: const Icon(Icons.remove,
                                               size: 18),
                                         ),
                                       ),
@@ -162,21 +168,21 @@ class OrderDetails extends ConsumerWidget {
                                       const SizedBox(width: 8),
                                       InkWell(
                                         onTap: () {
-                                          ref.read(cartProvider.notifier).increaseQuantity(
-                                            cartItems[index],
-                                          );
+                                          ref
+                                              .read(cartProvider.notifier)
+                                              .increaseQuantity(
+                                                cartItems[index],
+                                              );
                                         },
                                         child: Container(
-                                          padding:
-                                              const EdgeInsets.all(6),
+                                          padding: const EdgeInsets.all(6),
                                           decoration: BoxDecoration(
                                             color: Colors.grey.shade200,
                                             borderRadius:
-                                                BorderRadius.circular(
-                                                    6),
+                                                BorderRadius.circular(6),
                                           ),
-                                          child: const Icon(Icons.add,
-                                              size: 18),
+                                          child:
+                                              const Icon(Icons.add, size: 18),
                                         ),
                                       ),
                                     ],
@@ -191,122 +197,18 @@ class OrderDetails extends ConsumerWidget {
                   );
                 },
               ),
-              //   itemCount: 5,
-              //   itemBuilder: (context, index) {
-              //     return Container(
-              //       margin: const EdgeInsets.only(bottom: 16),
-              //       padding: const EdgeInsets.all(12),
-              //       decoration: BoxDecoration(
-              //         border: Border.all(color: Colors.grey.shade300),
-              //         borderRadius: BorderRadius.circular(12),
-              //       ),
-              //       child: Row(
-              //         children: [
-              //           Container(
-              //             width: 80,
-              //             height: 80,
-              //             decoration: BoxDecoration(
-              //               borderRadius: BorderRadius.circular(8),
-              //               image: const DecorationImage(
-              //                 image: NetworkImage(
-              //                   "https://wrapsnbeyond.com/wp-content/uploads/2025/02/classic-burger.webp",
-              //                 ),
-              //                 fit: BoxFit.cover,
-              //               ),
-              //             ),
-              //           ),
-              //           const SizedBox(width: 12),
-    
-              //           Expanded(
-              //             child: Column(
-              //               crossAxisAlignment:
-              //                   CrossAxisAlignment.start,
-              //               children: [
-              //                 const Text(
-              //                   "Burger Enak",
-              //                   style: TextStyle(
-              //                     fontSize: 18,
-              //                     fontWeight: FontWeight.w600,
-              //                   ),
-              //                 ),
-              //                 const SizedBox(height: 8),
-              //                 Row(
-              //                   mainAxisAlignment:
-              //                       MainAxisAlignment.spaceBetween,
-              //                   children: [
-              //                     const Text(
-              //                       "Rp 25.000",
-              //                       style: TextStyle(
-              //                         fontSize: 16,
-              //                         fontWeight: FontWeight.w700,
-              //                       ),
-              //                     ),
-    
-              //                     Row(
-              //                       children: [
-              //                         InkWell(
-              //                           onTap: () {
-    
-              //                           },
-              //                           child: Container(
-              //                             padding:
-              //                                 const EdgeInsets.all(6),
-              //                             decoration: BoxDecoration(
-              //                               color: Colors.grey.shade200,
-              //                               borderRadius:
-              //                                   BorderRadius.circular(
-              //                                       6),
-              //                             ),
-              //                             child: const Icon(
-              //                                 Icons.remove,
-              //                                 size: 18),
-              //                           ),
-              //                         ),
-              //                         const SizedBox(width: 8),
-              //                         const Text(
-              //                           "1",
-              //                           style: TextStyle(fontSize: 16),
-              //                         ),
-              //                         const SizedBox(width: 8),
-              //                         InkWell(
-              //                           onTap: () {
-              //                             // TODO: tambah qty
-              //                           },
-              //                           child: Container(
-              //                             padding:
-              //                                 const EdgeInsets.all(6),
-              //                             decoration: BoxDecoration(
-              //                               color: Colors.grey.shade200,
-              //                               borderRadius:
-              //                                   BorderRadius.circular(
-              //                                       6),
-              //                             ),
-              //                             child: const Icon(Icons.add,
-              //                                 size: 18),
-              //                           ),
-              //                         ),
-              //                       ],
-              //                     ),
-              //                   ],
-              //                 ),
-              //               ],
-              //             ),
-              //           ),
-              //         ],
-              //       ),
-              //     );
-              //   },
-              // ),
             ),
             const SizedBox(height: 8),
-    
             Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text("Subtotal"),
-                    Text(CurrencyHelper.formatIDR(ref.read(cartProvider.notifier).getTotalCartPrice().toString())),
+                    Text(CurrencyHelper.formatIDR(ref
+                        .read(cartProvider.notifier)
+                        .getTotalCartPrice()
+                        .toString())),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -314,7 +216,10 @@ class OrderDetails extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text("Tax (10%)"),
-                    Text(CurrencyHelper.formatIDR((ref.read(cartProvider.notifier).getTotalCartPrice() * 0.1).toString())),
+                    Text(CurrencyHelper.formatIDR(
+                        (ref.read(cartProvider.notifier).getTotalCartPrice() *
+                                0.1)
+                            .toString())),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -331,11 +236,18 @@ class OrderDetails extends ConsumerWidget {
                   children: [
                     const Text(
                       "Total",
-                      style: TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      CurrencyHelper.formatIDR((ref.read(cartProvider.notifier).getTotalCartPrice() + ref.read(cartProvider.notifier).getTotalCartPrice() * 0.1 + 2000).toString()),
+                      CurrencyHelper.formatIDR(
+                          (ref.read(cartProvider.notifier).getTotalCartPrice() +
+                                  ref
+                                          .read(cartProvider.notifier)
+                                          .getTotalCartPrice() *
+                                      0.1 +
+                                  2000)
+                              .toString()),
                       style: const TextStyle(
                           fontSize: 20, fontWeight: FontWeight.bold),
                     ),
@@ -343,9 +255,7 @@ class OrderDetails extends ConsumerWidget {
                 ),
               ],
             ),
-    
             const SizedBox(height: 16),
-    
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
