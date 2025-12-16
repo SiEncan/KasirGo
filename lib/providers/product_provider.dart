@@ -1,35 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/product_service.dart';
-import 'auth_provider.dart';
+import 'category_provider.dart'; // Import for dioClientProvider
 
 final productServiceProvider = Provider<ProductService>((ref) {
-  final tokenStorage = ref.read(tokenStorageProvider);
-  final authService = ref.read(authServiceProvider);
-
-  return ProductService(
-    tokenStorage: tokenStorage,
-    authService: authService,
-  );
+  final dioClient = ref.read(dioClientProvider);
+  return ProductService(dioClient: dioClient);
 });
 
 class ProductState {
-  final bool isLoading;
   final List<Map<String, dynamic>> products;
 
-  ProductState({
-    this.isLoading = false,
-    this.products = const [],
-  });
-
-  ProductState copyWith({
-    bool? isLoading,
-    List<Map<String, dynamic>>? products,
-  }) {
-    return ProductState(
-      isLoading: isLoading ?? this.isLoading,
-      products: products ?? this.products,
-    );
-  }
+  ProductState({this.products = const []});
 }
 
 class ProductNotifier extends StateNotifier<ProductState> {
@@ -38,20 +19,21 @@ class ProductNotifier extends StateNotifier<ProductState> {
   ProductNotifier(this.productService) : super(ProductState());
 
   Future<void> fetchAllProducts() async {
-    state = state.copyWith(isLoading: true);
-
     try {
       final data = await productService.getAllProduct();
-      state = state.copyWith(isLoading: false, products: data);
+      state = ProductState(products: data);
     } catch (e) {
-      state = state.copyWith(isLoading: false);
+      // Auto logout jika refresh token expired
+      if (e.toString().contains('REFRESH_TOKEN_EXPIRED')) {
+        // Token sudah di-clear di auth_service, throw error untuk UI handle
+        throw Exception('Session expired. Please login again.');
+      }
+      
       rethrow;
     }
   }
 
   Future<void> addProduct(Map<String, dynamic> payload) async {
-    state = state.copyWith(isLoading: true);
-
     try {
       await productService.createProduct(payload);
 
@@ -59,14 +41,11 @@ class ProductNotifier extends StateNotifier<ProductState> {
       await fetchAllProducts();
 
     } catch (e) {
-      state = state.copyWith(isLoading: false);
       rethrow;
     }
   }
 
   Future<void> editProduct(int productId, Map<String, dynamic> payload) async {
-    state = state.copyWith(isLoading: true);
-
     try {
       await productService.editProduct(productId, payload);
 
@@ -74,20 +53,16 @@ class ProductNotifier extends StateNotifier<ProductState> {
       await fetchAllProducts();
 
     } catch (e) {
-      state = state.copyWith(isLoading: false);
       rethrow;
     }
   }
 
   Future<void> deleteProduct(int productId) async {
-    state = state.copyWith(isLoading: true);
-
     try {
       await productService.deleteProduct(productId);
       await fetchAllProducts();
 
     } catch (e) {
-      state = state.copyWith(isLoading: false);
       rethrow;
     }
   }

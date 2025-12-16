@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:kasir_go/providers/product_provider.dart';
 import 'package:kasir_go/utils/snackbar_helper.dart';
 import 'package:kasir_go/utils/dialog_helper.dart';
+import 'package:kasir_go/utils/session_helper.dart';
 
 class EditProductDialog extends ConsumerStatefulWidget {
   final Map<String, dynamic> product;
@@ -446,7 +447,6 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
                   const SizedBox(width: 12),
                   ElevatedButton(
                     onPressed: () async {
-                      // Validasi form
                       if (nameController.text.trim().isEmpty) {
                         showErrorDialog(context, 'Product name is required', title: 'Validation Error');
                         return;
@@ -492,7 +492,13 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
                         showSuccessSnackBar(context, 'Product updated successfully');
                       } catch (e) {
                         if (!context.mounted) return;
-                        showErrorSnackBar(context, 'Product update failed: ${e.toString()}');
+                        
+                        if (isSessionExpiredError(e)) {
+                          await handleSessionExpired(context, ref);
+                          return;
+                        }
+                        
+                        showErrorDialog(context, e.toString(), title: 'Update Failed');
                       }
                     },
                     style: ElevatedButton.styleFrom(

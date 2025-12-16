@@ -1,33 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/category_service.dart';
+import '../services/dio_client.dart';
 import 'auth_provider.dart';
 import 'product_provider.dart';
 
-final categoryServiceProvider = Provider<CategoryService>((ref) {
+final dioClientProvider = Provider<DioClient>((ref) {
   final tokenStorage = ref.read(tokenStorageProvider);
   final authService = ref.read(authServiceProvider);
 
-  return CategoryService(
+  return DioClient(
     tokenStorage: tokenStorage,
     authService: authService,
   );
 });
 
+final categoryServiceProvider = Provider<CategoryService>((ref) {
+  final dioClient = ref.read(dioClientProvider);
+  return CategoryService(dioClient: dioClient);
+});
+
 class CategoryState {
-  final bool isLoading;
   final List<Map<String, dynamic>> categories;
 
-  CategoryState({this.isLoading = false, this.categories = const []});
-
-  CategoryState copyWith({
-    bool? isLoading,
-    List<Map<String, dynamic>>? categories,
-  }) {
-    return CategoryState(
-      isLoading: isLoading ?? this.isLoading,
-      categories: categories ?? this.categories,
-    );
-  }
+  CategoryState({this.categories = const []});
 }
 
 class CategoryNotifier extends StateNotifier<CategoryState> {
@@ -37,40 +32,39 @@ class CategoryNotifier extends StateNotifier<CategoryState> {
   CategoryNotifier(this.service, this.ref) : super(CategoryState());
 
   Future<void> fetchAllCategories() async {
-    state = state.copyWith(isLoading: true);
     try {
       final data = await service.getAllCategories();
-      state = state.copyWith(isLoading: false, categories: data);
+      state = CategoryState(categories: data);
     } catch (e) {
-      state = state.copyWith(isLoading: false);
+      // Auto logout jika refresh token expired
+      if (e.toString().contains('REFRESH_TOKEN_EXPIRED')) {
+        // Token sudah di-clear di auth_service, throw error untuk UI handle
+        throw Exception('Session expired. Please login again.');
+      }
+      
       rethrow;
     }
   }
 
   Future<void> addCategory(Map<String, dynamic> payload) async {
-    state = state.copyWith(isLoading: true);
     try {
       await service.createCategory(payload);
       await fetchAllCategories();
     } catch (e) {
-      state = state.copyWith(isLoading: false);
       rethrow;
     }
   }
 
   Future<void> editCategory(int categoryId, Map<String, dynamic> payload) async {
-    state = state.copyWith(isLoading: true);
     try {
       await service.editCategory(categoryId, payload);
       await fetchAllCategories();
     } catch (e) {
-      state = state.copyWith(isLoading: false);
       rethrow;
     }
   }
 
   Future<void> deleteCategory(int categoryId) async {
-    state = state.copyWith(isLoading: true);
     try {
       await service.deleteCategory(categoryId);
       await fetchAllCategories();
@@ -79,7 +73,6 @@ class CategoryNotifier extends StateNotifier<CategoryState> {
       // dengan category yang dihapus jadi null
       await ref.read(productProvider.notifier).fetchAllProducts();
     } catch (e) {
-      state = state.copyWith(isLoading: false);
       rethrow;
     }
   }

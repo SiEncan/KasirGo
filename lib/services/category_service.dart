@@ -1,8 +1,5 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:jwt_decode/jwt_decode.dart';
-import '../utils/token_storage.dart';
-import 'auth_service.dart';
+import 'package:dio/dio.dart';
+import 'dio_client.dart';
 
 class CategoryException implements Exception {
   final String message;
@@ -13,141 +10,80 @@ class CategoryException implements Exception {
 }
 
 class CategoryService {
-  final String baseUrl = "http://10.0.2.2:8000/api";
-  // final String baseUrl = "http://localhost:8000/api";
+  final DioClient dioClient;
 
-  final TokenStorage tokenStorage;
-  final AuthService authService;
-
-  CategoryService({required this.tokenStorage, required this.authService});
+  CategoryService({required this.dioClient});
 
   Future<List<Map<String, dynamic>>> getAllCategories() async {
-    String? accessToken = await tokenStorage.getAccessToken();
-
-    if (accessToken == null || Jwt.isExpired(accessToken)) {
-      try {
-        await authService.refreshAccessToken();
-        accessToken = await tokenStorage.getAccessToken();
-      } catch (e) {
-        throw Exception("Token expired, user harus login lagi");
+    try {
+      final response = await dioClient.dio.get('/categories/');
+      return List<Map<String, dynamic>>.from(response.data['data']);
+    } on DioException catch (e) {
+      // Check jika refresh token expired
+      if (e.error != null && e.error.toString().contains('REFRESH_TOKEN_EXPIRED')) {
+        throw Exception('REFRESH_TOKEN_EXPIRED');
       }
-    }
-
-    final url = Uri.parse("$baseUrl/categories/");
-    final response = await http.get(
-      url,
-      headers: {
-        'Authorization': 'Bearer $accessToken',
-        'Content-Type': 'application/json',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      final jsonBody = jsonDecode(response.body);
-      return List<Map<String, dynamic>>.from(jsonBody['data']);
-    } else {
-      try {
-        final errorJson = jsonDecode(response.body);
-        throw CategoryException(errorJson['message'] ?? 'Gagal mengambil data kategori');
-      } on FormatException {
+      
+      if (e.response != null) {
+        final errorMessage = e.response?.data['message'] ?? 'Gagal mengambil data kategori';
+        throw CategoryException(errorMessage);
+      } else {
         throw CategoryException('Gagal mengambil data kategori');
       }
     }
   }
 
   Future<void> createCategory(Map<String, dynamic> categoryData) async {
-    String? accessToken = await tokenStorage.getAccessToken();
-
-    if (accessToken == null || Jwt.isExpired(accessToken)) {
-      try {
-        await authService.refreshAccessToken();
-        accessToken = await tokenStorage.getAccessToken();
-      } catch (e) {
-        throw Exception("Token expired, user harus login lagi");
+    try {
+      await dioClient.dio.post('/category/create/', data: categoryData);
+    } on DioException catch (e) {
+      // Check jika refresh token expired
+      if (e.error != null && e.error.toString().contains('REFRESH_TOKEN_EXPIRED')) {
+        throw Exception('REFRESH_TOKEN_EXPIRED');
       }
-    }
-
-    final uri = Uri.parse("$baseUrl/category/create/");
-    final response = await http.post(
-      uri,
-      headers: {
-        'Authorization': 'Bearer $accessToken',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(categoryData),
-    );
-
-    if (response.statusCode != 201) {
-      try {
-        final errorJson = jsonDecode(response.body);
-        throw CategoryException(errorJson['message'] ?? 'Gagal membuat kategori');
-      } on FormatException {
+      
+      if (e.response != null) {
+        final errorMessage = e.response?.data['message'] ?? 'Gagal membuat kategori';
+        throw CategoryException(errorMessage);
+      } else {
         throw CategoryException('Gagal membuat kategori');
       }
     }
   }
 
   Future<void> editCategory(int categoryId, Map<String, dynamic> categoryData) async {
-    String? accessToken = await tokenStorage.getAccessToken();
-
-    if (accessToken == null || Jwt.isExpired(accessToken)) {
-      try {
-        await authService.refreshAccessToken();
-        accessToken = await tokenStorage.getAccessToken();
-      } catch (e) {
-        throw Exception("Token expired, user harus login lagi");
+    try {
+      await dioClient.dio.patch('/category/$categoryId/', data: categoryData);
+    } on DioException catch (e) {
+      // Check jika refresh token expired
+      if (e.error != null && e.error.toString().contains('REFRESH_TOKEN_EXPIRED')) {
+        throw Exception('REFRESH_TOKEN_EXPIRED');
       }
-    }
-
-    final uri = Uri.parse("$baseUrl/category/$categoryId/");
-    final response = await http.patch(
-      uri,
-      headers: {
-        'Authorization': 'Bearer $accessToken',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(categoryData),
-    );
-
-    if (response.statusCode != 200) {
-      try {
-        final errorJson = jsonDecode(response.body);
-        throw CategoryException(errorJson['message'] ?? 'Gagal mengubah kategori');
-      } on FormatException {
+      
+      if (e.response != null) {
+        final errorMessage = e.response?.data['message'] ?? 'Gagal mengubah kategori';
+        throw CategoryException(errorMessage);
+      } else {
         throw CategoryException('Gagal mengubah kategori');
       }
     }
   }
 
   Future<void> deleteCategory(int categoryId) async {
-    String? accessToken = await tokenStorage.getAccessToken();
-
-    if (accessToken == null || Jwt.isExpired(accessToken)) {
-      try {
-        await authService.refreshAccessToken();
-        accessToken = await tokenStorage.getAccessToken();
-      } catch (e) {
-        throw Exception("Token expired, user harus login lagi");
+    try {
+      await dioClient.dio.delete('/category/$categoryId/');
+    } on DioException catch (e) {
+      // Check jika refresh token expired
+      if (e.error != null && e.error.toString().contains('REFRESH_TOKEN_EXPIRED')) {
+        throw Exception('REFRESH_TOKEN_EXPIRED');
       }
-    }
-
-    final uri = Uri.parse("$baseUrl/category/$categoryId/");
-    final response = await http.delete(
-      uri,
-      headers: {
-        'Authorization': 'Bearer $accessToken',
-        'Content-Type': 'application/json',
-      },
-    );
-
-    if (response.statusCode != 200) {
-      try {
-        final errorJson = jsonDecode(response.body);
-        throw CategoryException(errorJson['message'] ?? 'Gagal menghapus kategori');
-      } on FormatException {
+      
+      if (e.response != null) {
+        final errorMessage = e.response?.data['message'] ?? 'Gagal menghapus kategori';
+        throw CategoryException(errorMessage);
+      } else {
         throw CategoryException('Gagal menghapus kategori');
       }
     }
   }
-
 }

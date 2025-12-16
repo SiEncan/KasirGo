@@ -1,9 +1,6 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:jwt_decode/jwt_decode.dart';
-import '../utils/token_storage.dart';
-import 'auth_service.dart';
+import 'dio_client.dart';
 
 class ProductException implements Exception {
   final String message;
@@ -14,173 +11,120 @@ class ProductException implements Exception {
 }
 
 class ProductService {
-  final String baseUrl = "http://10.0.2.2:8000/api";
-  // final String baseUrl = "http://localhost:8000/api";
-  final TokenStorage tokenStorage;
-  final AuthService authService;
+  final DioClient dioClient;
 
-  ProductService({required this.tokenStorage, required this.authService});
+  ProductService({required this.dioClient});
 
   Future<List<Map<String, dynamic>>> getAllProduct() async {
-    String? accessToken = await tokenStorage.getAccessToken();
-
-    if (accessToken == null || Jwt.isExpired(accessToken)) {
-      try {
-        await authService.refreshAccessToken();
-        accessToken = await tokenStorage.getAccessToken();
-      } catch (e) {
-        throw Exception("Token expired, user harus login lagi");
+    try {
+      final response = await dioClient.dio.get('/products/');
+      return List<Map<String, dynamic>>.from(response.data['data']);
+    } on DioException catch (e) {
+      // Check jika refresh token expired
+      if (e.error != null && e.error.toString().contains('REFRESH_TOKEN_EXPIRED')) {
+        throw Exception('REFRESH_TOKEN_EXPIRED');
       }
-    }
-
-    final url = Uri.parse("$baseUrl/products/");
-    final response = await http.get(
-      url,
-      headers: {
-        'Authorization': 'Bearer $accessToken',
-        'Content-Type': 'application/json',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      final jsonBody = jsonDecode(response.body);
-      return List<Map<String, dynamic>>.from(jsonBody['data']);
-    } else {
-      try {
-        final errorJson = jsonDecode(response.body);
-        throw ProductException(errorJson['message'] ?? 'Gagal mengambil data produk');
-      } on FormatException {
+      
+      if (e.response != null) {
+        final errorMessage = e.response?.data['message'] ?? 'Gagal mengambil data produk';
+        throw ProductException(errorMessage);
+      } else {
         throw ProductException('Gagal mengambil data produk');
       }
     }
   }
 
   Future<void> createProduct(Map<String, dynamic> productData) async {
-    String? accessToken = await tokenStorage.getAccessToken();
+    try {
+      final formData = FormData.fromMap({
+        'name': productData['name'],
+        'description': productData['description'],
+        'price': productData['price'].toString(),
+        'cost': productData['cost'].toString(),
+        'stock': productData['stock'].toString(),
+        'sku': productData['sku'],
+        'category': productData['category'].toString(),
+        'is_available': productData['is_available'] ? 'true' : 'false',
+      });
 
-    if (accessToken == null || Jwt.isExpired(accessToken)) {
-      try {
-        await authService.refreshAccessToken();
-        accessToken = await tokenStorage.getAccessToken();
-      } catch (e) {
-        throw Exception("Token expired, user harus login lagi");
+      final XFile? image = productData['image'];
+      if (image != null) {
+        formData.files.add(
+          MapEntry(
+            'image',
+            await MultipartFile.fromFile(image.path, filename: image.name),
+          ),
+        );
       }
-    }
 
-    final uri = Uri.parse("$baseUrl/product/create/");
-    final request = http.MultipartRequest("POST", uri);
-
-    request.headers['Authorization'] = 'Bearer $accessToken';
-
-    request.fields['name'] = productData['name'];
-    request.fields['description'] = productData['description'];
-    request.fields['price'] = productData['price'].toString();
-    request.fields['cost'] = productData['cost'].toString();
-    request.fields['stock'] = productData['stock'].toString();
-    request.fields['sku'] = productData['sku'];
-    request.fields['category'] = productData['category'].toString();
-    request.fields['is_available'] = productData['is_available'] ? 'true' : 'false';
-
-    final XFile? image = productData['image'];
-
-    if (image != null) {
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          'image',
-          image.path,
-        ),
-      );
-    }
-
-    final response = await request.send();
-
-    if (response.statusCode != 201) {
-      final body = await response.stream.bytesToString();
-      try {
-        final errorJson = jsonDecode(body);
-        throw ProductException(errorJson['message'] ?? 'Gagal membuat produk');
-      } on FormatException {
+      await dioClient.dio.post('/product/create/', data: formData);
+    } on DioException catch (e) {
+      // Check jika refresh token expired
+      if (e.error != null && e.error.toString().contains('REFRESH_TOKEN_EXPIRED')) {
+        throw Exception('REFRESH_TOKEN_EXPIRED');
+      }
+      
+      if (e.response != null) {
+        final errorMessage = e.response?.data['message'] ?? 'Gagal membuat produk';
+        throw ProductException(errorMessage);
+      } else {
         throw ProductException('Gagal membuat produk');
       }
     }
   }
 
   Future<void> editProduct(int productId, Map<String, dynamic> productData) async {
-    String? accessToken = await tokenStorage.getAccessToken();
+    try {
+      final formData = FormData.fromMap({
+        'name': productData['name'],
+        'description': productData['description'],
+        'price': productData['price'].toString(),
+        'cost': productData['cost'].toString(),
+        'stock': productData['stock'].toString(),
+        'sku': productData['sku'],
+        'category': productData['category'].toString(),
+        'is_available': productData['is_available'] ? 'true' : 'false',
+      });
 
-    if (accessToken == null || Jwt.isExpired(accessToken)) {
-      try {
-        await authService.refreshAccessToken();
-        accessToken = await tokenStorage.getAccessToken();
-      } catch (e) {
-        throw Exception("Token expired, You must log in again");
+      final XFile? image = productData['image'];
+      if (image != null) {
+        formData.files.add(
+          MapEntry(
+            'image',
+            await MultipartFile.fromFile(image.path, filename: image.name),
+          ),
+        );
       }
-    }
 
-    final uri = Uri.parse("$baseUrl/product/$productId/");
-    final request = http.MultipartRequest("PATCH", uri);
-
-    request.headers['Authorization'] = 'Bearer $accessToken';
-
-    request.fields['name'] = productData['name'];
-    request.fields['description'] = productData['description'];
-    request.fields['price'] = productData['price'].toString();
-    request.fields['cost'] = productData['cost'].toString();
-    request.fields['stock'] = productData['stock'].toString();
-    request.fields['sku'] = productData['sku'];
-    request.fields['category'] = productData['category'].toString();
-    request.fields['is_available'] = productData['is_available'] ? 'true' : 'false';
-
-    final XFile? image = productData['image'];
-
-    if (image != null) {
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          'image',
-          image.path,
-        ),
-      );
-    }
-
-    final response = await request.send();
-
-    if (response.statusCode != 200) {
-      final body = await response.stream.bytesToString();
-      try {
-        final errorJson = jsonDecode(body);
-        throw ProductException(errorJson['message'] ?? 'Gagal mengubah produk');
-      } on FormatException {
+      await dioClient.dio.patch('/product/$productId/', data: formData);
+    } on DioException catch (e) {
+      // Check jika refresh token expired
+      if (e.error != null && e.error.toString().contains('REFRESH_TOKEN_EXPIRED')) {
+        throw Exception('REFRESH_TOKEN_EXPIRED');
+      }
+      
+      if (e.response != null) {
+        final errorMessage = e.response?.data['message'] ?? 'Gagal mengubah produk';
+        throw ProductException(errorMessage);
+      } else {
         throw ProductException('Gagal mengubah produk');
       }
     }
   }
 
   Future<void> deleteProduct(int productId) async {
-    String? accessToken = await tokenStorage.getAccessToken();
-
-    if (accessToken == null || Jwt.isExpired(accessToken)) {
-      try {
-        await authService.refreshAccessToken();
-        accessToken = await tokenStorage.getAccessToken();
-      } catch (e) {
-        throw Exception("Token expired, You must log in again");
+    try {
+      await dioClient.dio.delete('/product/$productId/');
+    } on DioException catch (e) {
+      // Check jika refresh token expired
+      if (e.error != null && e.error.toString().contains('REFRESH_TOKEN_EXPIRED')) {
+        throw Exception('REFRESH_TOKEN_EXPIRED');
       }
-    }
-
-    final uri = Uri.parse("$baseUrl/product/$productId/");
-    final response = await http.delete(
-      uri,
-      headers: {
-        'Authorization': 'Bearer $accessToken',
-        'Content-Type': 'application/json',
-      },
-    );
-
-    if (response.statusCode != 200) {
-      try {
-        final errorJson = jsonDecode(response.body);
-        throw ProductException(errorJson['message'] ?? 'Gagal menghapus produk');
-      } on FormatException {
+      
+      if (e.response != null) {
+        final errorMessage = e.response?.data['message'] ?? 'Gagal menghapus produk';
+        throw ProductException(errorMessage);
+      } else {
         throw ProductException('Gagal menghapus produk');
       }
     }

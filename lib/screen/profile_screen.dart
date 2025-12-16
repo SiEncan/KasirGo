@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:kasir_go/utils/dialog_helper.dart';
+import 'package:kasir_go/utils/session_helper.dart';
 import '../providers/auth_provider.dart';
 import 'login_screen.dart';
 
@@ -18,6 +19,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _obscureOldPassword = true;
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isLoading = true;
+  String? _errorMessage;
+  Map<String, dynamic>? _profile;
+  
   late TextEditingController _usernameController;
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
@@ -26,6 +31,36 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final TextEditingController _oldPasswordController = TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    
+    Future.microtask(() async {
+      try {
+        final profile = await ref.read(authProvider.notifier).getProfile();
+        if (!mounted) return;
+        
+        setState(() {
+          _profile = profile;
+          _isLoading = false;
+        });
+      } catch (e) {
+        final ctx = context; // Capture before async
+        if (!mounted) return;
+        if (isSessionExpiredError(e)) {
+          if (!ctx.mounted) return; // Check ctx.mounted
+          await handleSessionExpired(ctx, ref);
+          return;
+        }
+        
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -42,30 +77,153 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final profileAsync = ref.watch(userProfileProvider);
+    // Handle loading state
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.grey.shade50,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: Colors.deepOrange.shade400),
+              const SizedBox(height: 16),
+              Text(
+                'Loading profile...',
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
+    // Handle error state
+    if (_errorMessage != null) {
+      return Scaffold(
+        backgroundColor: Colors.grey.shade50,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Iconsax.info_circle, size: 64, color: Colors.red.shade400),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  "Failed to Load Profile",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade900,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  _errorMessage!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 32),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton.icon(
+                      icon: const Icon(Iconsax.refresh),
+                      label: const Text("Retry"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepOrange.shade400,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isLoading = true;
+                          _errorMessage = null;
+                        });
+                        // Trigger initState logic again
+                        Future.microtask(() async {
+                          try {
+                            final profile = await ref.read(authProvider.notifier).getProfile();
+                            if (!mounted) return;
+                            setState(() {
+                              _profile = profile;
+                              _isLoading = false;
+                            });
+                          } catch (e) {
+                            final ctx = context;
+                            if (!mounted) return;
+
+                            if (isSessionExpiredError(e)) {
+                              if (!ctx.mounted) return;
+                              await handleSessionExpired(ctx, ref);
+                              return;
+                            }
+
+                            setState(() {
+                              _errorMessage = e.toString();
+                              _isLoading = false;
+                            });
+                          }
+                        });
+                      },
+                    ),
+                    const SizedBox(width: 12),
+                    OutlinedButton.icon(
+                      icon: const Icon(Iconsax.logout),
+                      label: const Text("Logout"),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red.shade600,
+                        side: BorderSide(color: Colors.red.shade300),
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () async {
+                        await ref.read(authProvider.notifier).logout();
+                        if (!context.mounted) return;
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (_) => const LoginScreen()),
+                          (route) => false,
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    
+    final profile = _profile!;
+    final username = profile['username'] ?? '-';
+    final firstName = profile['first_name'] ?? '-';
+    final lastName = profile['last_name'] ?? '-';
+    final email = profile['email'] ?? '-';
+    final phone = profile['phone'] ?? '-';
+    final role = profile['role'] ?? '-';
+
+    if (!_isEditing) {
+      _usernameController = TextEditingController(text: username);
+      _firstNameController = TextEditingController(text: firstName);
+      _lastNameController = TextEditingController(text: lastName);
+      _emailController = TextEditingController(text: email);
+      _phoneController = TextEditingController(text: phone);
+    }
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
-      body: profileAsync.when(
-        data: (profile) {
-          final username = profile['username'] ?? '-';
-          final firstName = profile['first_name'] ?? '-';
-          final lastName = profile['last_name'] ?? '-';
-          final email = profile['email'] ?? '-';
-          final phone = profile['phone'] ?? '-';
-          final role = profile['role'] ?? '-';
-
-          if (!_isEditing) {
-            _usernameController = TextEditingController(text: username);
-            _firstNameController = TextEditingController(text: firstName);
-            _lastNameController = TextEditingController(text: lastName);
-            _emailController = TextEditingController(text: email);
-            _phoneController = TextEditingController(text: phone);
-          }
-
-          return Column(
+      body: Column(
             children: [
-              // Simple AppBar
               Container(
                 color: Colors.white,
                 child: const SafeArea(
@@ -167,7 +325,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 ],
                               ),
                               const SizedBox(height: 24),
-                              _buildForm()
+                              _buildForm(context)
                             ],
                           ),
                         ),
@@ -216,7 +374,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   ],
                                 ),
                                 const SizedBox(height: 8),
-                                _buildPasswordForm(),
+                                _buildPasswordForm(context),
                               ],
                             ),
                           ),
@@ -299,106 +457,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
             ],
-          );
-        },
-        loading: () => Scaffold(
-          backgroundColor: Colors.grey.shade50,
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(color: Colors.deepOrange.shade400),
-                const SizedBox(height: 16),
-                Text(
-                  'Loading profile...',
-                  style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-                ),
-              ],
-            ),
-          ),
-        ),
-        error: (error, stack) {
-          return Scaffold(
-            backgroundColor: Colors.grey.shade50,
-            body: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade50,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Iconsax.info_circle, size: 64, color: Colors.red.shade400),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      "Failed to Load Profile",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey.shade900,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      error.toString(),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
-                    ),
-                    const SizedBox(height: 32),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton.icon(
-                          icon: const Icon(Iconsax.refresh),
-                          label: const Text("Retry"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepOrange.shade400,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          onPressed: () {
-                            ref.invalidate(userProfileProvider);
-                          },
-                        ),
-                        const SizedBox(width: 12),
-                        OutlinedButton.icon(
-                          icon: const Icon(Iconsax.logout),
-                          label: const Text("Logout"),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.red.shade600,
-                            side: BorderSide(color: Colors.red.shade300),
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          onPressed: () async {
-                            await ref.read(authProvider.notifier).logout();
-                            if (!context.mounted) return;
-                            Navigator.pushAndRemoveUntil(
-                              context,
-                              MaterialPageRoute(builder: (_) => const LoginScreen()),
-                              (route) => false,
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
+          )
     );
   }
 
-  Widget _buildForm() {
+  Widget _buildForm(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -675,10 +738,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     
                     ref.invalidate(userProfileProvider);
                     
-                    if (!context.mounted) return;
                     showSuccessDialog(context, 'Your profile has been updated successfully', title: 'Profile Updated');
                   } catch (e) {
                     if (!context.mounted) return;
+
+                    // Handle session expired
+                    if (isSessionExpiredError(e)) {
+                      await handleSessionExpired(context, ref);
+                      return;
+                    }
+                    
                     showErrorDialog(context, e.toString(), title: 'Update Failed');
                   }
                 },
@@ -701,7 +770,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildPasswordForm() {
+  Widget _buildPasswordForm(BuildContext context) {
     if (!_isChangingPassword) {
       return Column(
         children: [
@@ -950,11 +1019,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       _obscureConfirmPassword = true;
                     });
                       
-                    if (!context.mounted) return;
                     showSuccessDialog(context, 'Your password has been changed successfully', title: 'Password Updated');
                   
                   } catch (e) {
                     if (!context.mounted) return;
+                    
+                    // Handle session expired
+                    if (isSessionExpiredError(e)) {
+                      await handleSessionExpired(context, ref);
+                      return;
+                    }
+                    
                     showErrorDialog(
                       context,
                       e.toString(),

@@ -7,6 +7,7 @@ import 'package:kasir_go/component/products/dialogs/add_product_dialog.dart';
 import 'package:kasir_go/component/products/dialogs/edit_category_dialog.dart';
 import 'package:kasir_go/providers/product_provider.dart';
 import 'package:kasir_go/providers/category_provider.dart';
+import 'package:kasir_go/utils/session_helper.dart';
 
 class ManageProductsScreen extends ConsumerStatefulWidget {
   const ManageProductsScreen({super.key});
@@ -25,9 +26,18 @@ class _ManageProductsScreenState extends ConsumerState<ManageProductsScreen> {
     super.initState();
     selectedCategoryId = 'all';
 
-    Future.microtask(() {
-      ref.read(categoryProvider.notifier).fetchAllCategories();
-      ref.read(productProvider.notifier).fetchAllProducts();
+    Future.microtask(() async {
+      try {
+        await ref.read(categoryProvider.notifier).fetchAllCategories();
+        await ref.read(productProvider.notifier).fetchAllProducts();
+      } catch (e) {
+        // Jika session expired, logout dan redirect ke login
+        if (isSessionExpiredError(e)) {
+          if (!mounted) return;
+          await handleSessionExpired(context, ref);
+          return;
+        }
+      }
     });
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir_go/providers/category_provider.dart';
 import 'package:kasir_go/utils/snackbar_helper.dart';
 import 'package:kasir_go/utils/dialog_helper.dart';
+import 'package:kasir_go/utils/session_helper.dart';
 
 class EditCategoryDialog extends ConsumerStatefulWidget {
   final Map<String, dynamic> category;
@@ -52,7 +53,6 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -100,15 +100,12 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
                 ],
               ),
             ),
-
-            // Content
             Flexible(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Category Icon Preview
                     Center(
                       child: Container(
                         width: 80,
@@ -136,8 +133,6 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // Name Field
                     const Text(
                       "Category Name",
                       style: TextStyle(
@@ -170,8 +165,6 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    // Description Field
                     const Text(
                       "Description",
                       style: TextStyle(
@@ -207,10 +200,7 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       ),
                     ),
-
                     const SizedBox(height: 24),
-
-                    // Delete Category Button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -230,7 +220,13 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
                               }
                             } catch (e) {
                               if (context.mounted) {
-                                showErrorSnackBar(context, 'Category deletion failed: ${e.toString()}');
+                                
+                                if (isSessionExpiredError(e)) {
+                                  await handleSessionExpired(context, ref);
+                                  return;
+                                }
+                                
+                                showErrorDialog(context, e.toString(), title: 'Delete Failed');
                               }
                             }
                           }
@@ -252,8 +248,6 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
                 ),
               ),
             ),
-
-            // Footer
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -288,7 +282,6 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
                   const SizedBox(width: 12),
                   ElevatedButton.icon(
                     onPressed: () async {
-                      // Validasi form
                       if (nameController.text.trim().isEmpty) {
                         showErrorDialog(context, 'Category name is required', title: 'Validation Error');
                         return;
@@ -306,7 +299,13 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
                         showSuccessSnackBar(context, 'Category updated successfully');
                       } catch (e) {
                         if (!context.mounted) return;
-                        showErrorSnackBar(context, 'Category update failed: ${e.toString()}');
+                        
+                        if (isSessionExpiredError(e)) {
+                          await handleSessionExpired(context, ref);
+                          return;
+                        }
+                        
+                        showErrorDialog(context, e.toString(), title: 'Update Failed');
                       }
                     },
                     icon: const Icon(Icons.check, size: 18),

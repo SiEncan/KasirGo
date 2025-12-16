@@ -1,9 +1,23 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/auth_service.dart';
+import '../services/dio_client.dart';
 import '../utils/token_storage.dart';
 
-final authServiceProvider = Provider((ref) => AuthService(tokenStorage: TokenStorage()));
 final tokenStorageProvider = Provider((ref) => TokenStorage());
+
+final authServiceProvider = Provider((ref) {
+  final tokenStorage = ref.read(tokenStorageProvider);
+  final authService = AuthService(tokenStorage: tokenStorage);
+  
+  // Inject DioClient setelah AuthService created (avoid circular dependency)
+  final dioClient = DioClient(
+    tokenStorage: tokenStorage,
+    authService: authService,
+  );
+  authService.dioClient = dioClient;
+  
+  return authService;
+});
 
 class AuthState {
   final bool isLoading;
@@ -86,6 +100,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
       rethrow; // Re-throw agar bisa di-catch di UI
     }
   }
+
+  /// Get current user profile
+  Future<Map<String, dynamic>> getProfile() async {
+    try {
+      final userId = await authService.getUserId();
+      if (userId == null) throw Exception("User not logged in");
+
+      return await authService.getProfile(userId);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
 
 final authProvider =
@@ -117,7 +143,6 @@ final userProfileProvider = FutureProvider<Map<String, dynamic>>((ref) async {
     
     return profile;
   } catch (e) {
-    print('Profile fetch error: $e');
     rethrow;
   }
 });

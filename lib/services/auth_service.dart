@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decode/jwt_decode.dart';
 import '../utils/token_storage.dart';
+import 'dio_client.dart';
 
 class AuthException implements Exception {
   final String message;
@@ -15,8 +17,9 @@ class AuthService {
   final String baseUrl = "http://10.0.2.2:8000/api";
   // final String baseUrl = "http://localhost:8000/api";
   final TokenStorage tokenStorage;
+  DioClient? dioClient; // Optional untuk avoid circular dependency
 
-  AuthService({required this.tokenStorage});
+  AuthService({required this.tokenStorage, this.dioClient});
 
   Future<Map<String, dynamic>> login(String username, String password) async {
     final url = Uri.parse("$baseUrl/auth/login/");
@@ -55,7 +58,10 @@ class AuthService {
 
   Future<void> refreshAccessToken() async {
     final refreshToken = await tokenStorage.getRefreshToken();
-    if (refreshToken == null) throw Exception("No refresh token");
+    if (refreshToken == null) {
+      await tokenStorage.clear();
+      throw AuthException("REFRESH_TOKEN_EXPIRED");
+    }
 
     final url = Uri.parse("$baseUrl/auth/refresh/");
     final response = await http.post(
@@ -69,38 +75,27 @@ class AuthService {
       await tokenStorage.saveTokens(data['access'], data['refresh'] ?? refreshToken);
     } else {
       // refresh gagal maka logout
+      print('Refresh token expired or invalid');
       await tokenStorage.clear();
-      throw Exception("Refresh token failed");
+      throw AuthException("REFRESH_TOKEN_EXPIRED");
     }
   }
 
   Future<Map<String, dynamic>> getProfile(String userId) async {
-    String? accessToken = await tokenStorage.getAccessToken();
-
-    if (accessToken == null || Jwt.isExpired(accessToken)) {
-      try {
-        await refreshAccessToken();
-        accessToken = await tokenStorage.getAccessToken();
-      } catch (e) {
-        throw Exception("Token expired, user harus login lagi");
+    try {
+      final response = await dioClient!.dio.get('/user/$userId/');
+      return response.data['data'];
+    } on DioException catch (e) {
+      // Preserve REFRESH_TOKEN_EXPIRED error
+      if (e.error != null && e.error.toString().contains('REFRESH_TOKEN_EXPIRED')) {
+        throw Exception('REFRESH_TOKEN_EXPIRED');
       }
-    }
-
-    final url = Uri.parse("$baseUrl/user/$userId/");
-    final response = await http.get(
-      url,
-      headers: {
-        'Authorization': 'Bearer $accessToken',
-        'Content-Type': 'application/json',
-      },
-    );
-
-    final Map<String, dynamic> jsonBody = jsonDecode(response.body);
-
-    if (response.statusCode == 200) {
-      return jsonBody['data'];
-    } else {
-      throw Exception("Failed to fetch profile: ${response.body}");
+      
+      if (e.response != null) {
+        throw Exception("Failed to fetch profile: ${e.response?.data}");
+      } else {
+        throw Exception("Failed to fetch profile");
+      }
     }
   }
 
@@ -112,38 +107,20 @@ class AuthService {
     String? email,
     String? phone,
   }) async {
-    String? accessToken = await tokenStorage.getAccessToken();
-
-    if (accessToken == null || Jwt.isExpired(accessToken)) {
-      try {
-        await refreshAccessToken();
-        accessToken = await tokenStorage.getAccessToken();
-      } catch (e) {
-        throw Exception("Token expired, user harus login lagi");
-      }
-    }
-
-    final url = Uri.parse("$baseUrl/user/$userId/");
-    final response = await http.patch(
-      url,
-      headers: {
-        'Authorization': 'Bearer $accessToken',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        if (username != null) 'username': username,
-        if (firstName != null) 'first_name': firstName,
-        if (lastName != null) 'last_name': lastName,
-        if (email != null) 'email': email,
-        if (phone != null) 'phone': phone,
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      final jsonBody = jsonDecode(response.body);
-      return jsonBody['data'];
-    } else {
-      throw Exception("Failed to update profile: ${response.body}");
+    try {
+      final response = await dioClient!.dio.patch(
+        '/user/$userId/',
+        data: {
+          if (username != null) 'username': username,
+          if (firstName != null) 'first_name': firstName,
+          if (lastName != null) 'last_name': lastName,
+          if (email != null) 'email': email,
+          if (phone != null) 'phone': phone,
+        },
+      );
+      return response.data['data'];
+    } on DioException catch (e) {
+      throw Exception("Failed to update profile: ${e.response?.data}");
     }
   }
 
@@ -152,49 +129,21 @@ class AuthService {
     required String oldPassword,
     required String newPassword,
   }) async {
-    String? accessToken = await tokenStorage.getAccessToken();
-
-    if (accessToken == null || Jwt.isExpired(accessToken)) {
-      try {
-        await refreshAccessToken();
-        accessToken = await tokenStorage.getAccessToken();
-      } catch (e) {
-        throw Exception("Token expired, user harus login lagi");
-      }
-    }
-
-    final url = Uri.parse("$baseUrl/user/$userId/change-password/");
-    final response = await http.post(
-      url,
-      headers: {
-        'Authorization': 'Bearer $accessToken',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'old_password': oldPassword,
-        'new_password': newPassword,
-      }),
-    );
-
-    if (response.statusCode != 200) {
-      // Debug: Print response untuk lihat format sebenarnya
-      print('=== Change Password Error Debug ===');
-      print('Status Code: ${response.statusCode}');
-      print('Response Body: ${response.body}');
-      print('Response Body Type: ${response.body.runtimeType}');
-      
-      try {
-        final errorData = jsonDecode(response.body);
-        print('Parsed JSON successfully: $errorData');
-        final errorMessage = errorData['message'] ?? 'Failed to change password';
-        print('Error message extracted: $errorMessage');
+    try {
+      await dioClient!.dio.post(
+        '/user/$userId/change-password/',
+        data: {
+          'old_password': oldPassword,
+          'new_password': newPassword,
+        },
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final errorMessage = e.response?.data['message'] ?? 'Failed to change password';
         throw AuthException(errorMessage);
-      } on FormatException catch (e) {
-        // Jika JSON parse gagal
-        print('JSON parse failed with FormatException: $e');
-        throw AuthException("Failed to change password: ${response.body}");
+      } else {
+        throw AuthException("Failed to change password");
       }
-      // Exception dari throw AuthException(errorMessage) akan langsung propagate ke caller
     }
   }
 

@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:kasir_go/providers/product_provider.dart';
 import 'package:kasir_go/utils/snackbar_helper.dart';
 import 'package:kasir_go/utils/dialog_helper.dart';
+import 'package:kasir_go/utils/session_helper.dart';
 
 class AddProductDialog extends ConsumerStatefulWidget {
   final String initialCategoryId;
@@ -87,7 +88,6 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -300,7 +300,7 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
                             value: category['id'].toString(),
                             child: Text(category['name']),
                           );
-                        }).toList(),
+                        }),
                       ],
                       onChanged: (value) {
                         setState(() {
@@ -364,8 +364,6 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
                 ),
               ),
             ),
-
-            // Footer Actions
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -402,7 +400,6 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
                   const SizedBox(width: 12),
                   ElevatedButton(
                     onPressed: () async {
-                      // Validasi form
                       if (_productName.trim().isEmpty) {
                         showErrorDialog(context, 'Product name is required', title: 'Validation Error');
                         return;
@@ -443,7 +440,13 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
                         showSuccessSnackBar(context, 'Product added successfully');
                       } catch (e) {
                         if (!context.mounted) return;
-                        showErrorSnackBar(context, 'Failed to add product: ${e.toString()}');
+                        
+                        if (isSessionExpiredError(e)) {
+                          await handleSessionExpired(context, ref);
+                          return;
+                        }
+                        
+                        showErrorDialog(context, e.toString(), title: 'Failed to Add Product');
                       }
                     },
                     style: ElevatedButton.styleFrom(

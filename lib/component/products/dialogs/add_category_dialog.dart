@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir_go/providers/category_provider.dart';
 import 'package:kasir_go/utils/snackbar_helper.dart';
 import 'package:kasir_go/utils/dialog_helper.dart';
+import 'package:kasir_go/utils/session_helper.dart';
 
 class AddCategoryDialog extends ConsumerStatefulWidget {
   const AddCategoryDialog({super.key});
@@ -34,7 +35,6 @@ class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -83,14 +83,12 @@ class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
               ),
             ),
 
-            // Content
             Flexible(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Category Icon Preview
                     Center(
                       child: Container(
                         width: 80,
@@ -122,7 +120,6 @@ class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Name Field
                     const Text(
                       "Category Name",
                       style: TextStyle(
@@ -159,8 +156,6 @@ class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    // Description Field
                     const Text(
                       "Description",
                       style: TextStyle(
@@ -199,10 +194,7 @@ class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
                             horizontal: 16, vertical: 14),
                       ),
                     ),
-
                     const SizedBox(height: 24),
-
-                    // Info Box
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -231,8 +223,6 @@ class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
                 ),
               ),
             ),
-
-            // Footer
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -268,7 +258,6 @@ class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
                   const SizedBox(width: 12),
                   ElevatedButton.icon(
                     onPressed: () async {
-                      // Validasi form
                       if (nameController.text.trim().isEmpty) {
                         showErrorDialog(context, 'Category name is required', title: 'Validation Error');
                         return;
@@ -286,7 +275,13 @@ class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
                         showSuccessSnackBar(context, 'Category added successfully');
                       } catch (e) {
                         if (!context.mounted) return;
-                        showErrorSnackBar(context, 'Failed to add category: ${e.toString()}');
+                        
+                        if (isSessionExpiredError(e)) {
+                          await handleSessionExpired(context, ref);
+                          return;
+                        }
+                        
+                        showErrorDialog(context, e.toString(), title: 'Failed to Add Category');
                       }
                     },
                     icon: const Icon(Icons.add, size: 18),

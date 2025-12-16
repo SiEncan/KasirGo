@@ -5,6 +5,7 @@ import 'package:kasir_go/component/home/order_detail.dart';
 import 'package:kasir_go/component/home/product_view.dart';
 import 'package:kasir_go/providers/category_provider.dart';
 import 'package:kasir_go/providers/product_provider.dart';
+import 'package:kasir_go/utils/session_helper.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({
@@ -25,9 +26,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.initState();
     selectedCategoryId = 'all';
 
-    Future.microtask(() {
-      ref.read(categoryProvider.notifier).fetchAllCategories();
-      ref.read(productProvider.notifier).fetchAllProducts();
+    Future.microtask(() async {
+      try {
+        await ref.read(categoryProvider.notifier).fetchAllCategories();
+        await ref.read(productProvider.notifier).fetchAllProducts();
+      } catch (e) {
+        // Jika session expired, logout dan redirect ke login
+        if (isSessionExpiredError(e)) {
+          if (!mounted) return;
+          await handleSessionExpired(context, ref);
+          return;
+        }
+      }
     });
   }
 

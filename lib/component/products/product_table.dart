@@ -6,6 +6,7 @@ import 'package:kasir_go/component/products/dialogs/edit_product_dialog.dart';
 import 'package:kasir_go/providers/product_provider.dart';
 import 'package:kasir_go/utils/snackbar_helper.dart';
 import 'package:kasir_go/utils/dialog_helper.dart';
+import 'package:kasir_go/utils/session_helper.dart';
 
 class ProductTable extends ConsumerWidget {
   final List<Map<String, dynamic>> products;
@@ -403,7 +404,13 @@ class ProductTable extends ConsumerWidget {
                     }
                   } catch (e) {
                     if (context.mounted) {
-                      showErrorSnackBar(context, e.toString());
+                      
+                      if (isSessionExpiredError(e)) {
+                        await handleSessionExpired(context, ref);
+                        return;
+                      }
+                      
+                      showErrorDialog(context, e.toString(), title: 'Delete Failed');
                     }
                   }
                 }
