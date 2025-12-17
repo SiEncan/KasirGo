@@ -14,7 +14,7 @@ class ProductView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return SliverPadding(
-      padding: const EdgeInsets.only(top: 4, left: 16, right: 16, bottom: 24),
+      padding: const EdgeInsets.only(top: 4, left: 16, right: 12, bottom: 24),
       sliver: SliverGrid(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3,
@@ -40,7 +40,6 @@ class ProductView extends ConsumerWidget {
               ),
             ),
             onPressed: () {
-              // TODO: tambahkan ke cart
               ref.read(cartProvider.notifier).addCartItem(
                 CartState(
                   product: product,
@@ -48,7 +47,6 @@ class ProductView extends ConsumerWidget {
                   totalPrice: double.tryParse(price) ?? 0.0,
                 ),
               );
-              print("ADD PRODUCT: ${product['name']}");
             },
             child: Container(
               padding: const EdgeInsets.all(10),
@@ -81,7 +79,7 @@ class ProductView extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(12),
                         child: imageUrl != null && imageUrl.isNotEmpty
                             ? Image.network(
-                                'http://10.0.2.2:8000/$imageUrl',
+                                'http://10.0.2.2:8000$imageUrl',
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
                                   return Icon(

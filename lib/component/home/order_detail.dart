@@ -17,7 +17,7 @@ class OrderDetails extends ConsumerWidget {
     return Expanded(
       flex: 2,
       child: Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
         color: Colors.white,
         child: Column(
           children: [
@@ -75,7 +75,7 @@ class OrderDetails extends ConsumerWidget {
             ),
             const Divider(height: 50),
             Expanded(
-              child: ListView.builder(
+              child: cartItems.isNotEmpty ? ListView.builder(
                 itemCount: cartItems.length,
                 itemBuilder: (context, index) {
                   return Container(
@@ -196,6 +196,11 @@ class OrderDetails extends ConsumerWidget {
                     ),
                   );
                 },
+              ) : const Center(
+                child: Text(
+                  "No items in the order.",
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
               ),
             ),
             const SizedBox(height: 8),

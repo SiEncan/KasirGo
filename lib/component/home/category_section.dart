@@ -66,53 +66,50 @@ class CategorySection extends SliverPersistentHeaderDelegate {
               ],
             ),
             const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 0),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    const SizedBox(width: 16),
-                    _buildCategoryButton(
-                      context,
-                      id: 'all',
-                      name: 'All Menu',
-                      icon: Iconsax.category,
-                      itemCount: productsState.products.length,
-                    ),
-                    const SizedBox(width: 12),
-                    ...sortedCategories.map((category) {
-                      final categoryId = category['id'];
-                      final categoryName =
-                          (category['name'] ?? '').toString().toLowerCase();
-                      IconData categoryIcon = Icons.restaurant;
-                      if (categoryName.contains('dessert') ||
-                          categoryName.contains('cake')) {
-                        categoryIcon = Icons.cake;
-                      } else if (categoryName.contains('beverage') ||
-                          categoryName.contains('drink') ||
-                          categoryName.contains('coffee')) {
-                        categoryIcon = Icons.coffee;
-                      }
-                      final itemCount = productsState.products
-                          .where((product) =>
-                              product['category'].toString() ==
-                              categoryId.toString() && product['is_available'] == true)
-                          .length;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: _buildCategoryButton(
-                          context,
-                          id: categoryId.toString(),
-                          name: category['name'] ?? 'Unknown',
-                          icon: categoryIcon,
-                          itemCount: itemCount,
-                        ),
-                      );
-                    }),
-                    const SizedBox(width: 4),
-                  ],
-                ),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  const SizedBox(width: 16),
+                  _buildCategoryButton(
+                    context,
+                    id: 'all',
+                    name: 'All Menu',
+                    icon: Iconsax.category,
+                    itemCount: productsState.products.length,
+                  ),
+                  const SizedBox(width: 12),
+                  ...sortedCategories.map((category) {
+                    final categoryId = category['id'];
+                    final categoryName =
+                        (category['name'] ?? '').toString().toLowerCase();
+                    IconData categoryIcon = Icons.restaurant;
+                    if (categoryName.contains('dessert') ||
+                        categoryName.contains('cake')) {
+                      categoryIcon = Icons.cake;
+                    } else if (categoryName.contains('beverage') ||
+                        categoryName.contains('drink') ||
+                        categoryName.contains('coffee')) {
+                      categoryIcon = Icons.coffee;
+                    }
+                    final itemCount = productsState.products
+                        .where((product) =>
+                            product['category'].toString() ==
+                            categoryId.toString() && product['is_available'] == true)
+                        .length;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: _buildCategoryButton(
+                        context,
+                        id: categoryId.toString(),
+                        name: category['name'] ?? 'Unknown',
+                        icon: categoryIcon,
+                        itemCount: itemCount,
+                      ),
+                    );
+                  }),
+                  const SizedBox(width: 4),
+                ],
               ),
             ),
           ],
