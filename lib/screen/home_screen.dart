@@ -197,6 +197,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             VerticalDivider(
               color: Colors.grey.shade300,
               thickness: 1,
+              width: 5,
             ),
             const OrderDetails()
           ],

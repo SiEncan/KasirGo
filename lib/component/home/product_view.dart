@@ -25,10 +25,114 @@ class ProductView extends ConsumerWidget {
         delegate: SliverChildBuilderDelegate(
           (context, index) {
             final product = products[index];
-            final imageUrl = product['image'] as String?;
-            final price = product['price'];
+            return _ProductCard(product: product, ref: ref);
+          },
+          childCount: products.length,
+        ),
+      ),
+    );
+  }
+}
 
-            return OutlinedButton(
+class _ProductCard extends StatefulWidget {
+  final Map<String, dynamic> product;
+  final WidgetRef ref;
+
+  const _ProductCard({
+    required this.product,
+    required this.ref,
+  });
+
+  @override
+  State<_ProductCard> createState() => _ProductCardState();
+}
+
+class _ProductCardState extends State<_ProductCard> with TickerProviderStateMixin {
+  late AnimationController _scaleController;
+  late Animation<double> _scaleAnimation;
+  
+  final List<_BadgeAnimation> _badges = [];
+  int _badgeIdCounter = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    _scaleController = AnimationController(
+      duration: const Duration(milliseconds: 100),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.92).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    for (final badge in _badges) {
+      badge.controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _spawnBadge() {
+    final controller = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    
+    final id = _badgeIdCounter++;
+    final badge = _BadgeAnimation(id: id, controller: controller);
+    
+    controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        if (mounted) {
+          setState(() {
+            _badges.removeWhere((b) => b.id == id);
+          });
+          controller.dispose();
+        }
+      }
+    });
+    
+    setState(() => _badges.add(badge));
+    controller.forward();
+  }
+
+  void _onTap() {
+    final price = widget.product['price'];
+    
+    _scaleController.forward().then((_) => _scaleController.reverse());
+
+    widget.ref.read(cartProvider.notifier).addCartItem(
+      CartState(
+        product: widget.product,
+        quantity: 1,
+        totalPrice: double.tryParse(price) ?? 0.0,
+      ),
+    );
+
+    _spawnBadge();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = widget.product['image'] as String?;
+    final price = widget.product['price'];
+
+    return AnimatedBuilder(
+      animation: _scaleAnimation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: child,
+        );
+      },
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          OutlinedButton(
             style: OutlinedButton.styleFrom(
               padding: EdgeInsets.zero,
               side: BorderSide(
@@ -39,15 +143,7 @@ class ProductView extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
-            onPressed: () {
-              ref.read(cartProvider.notifier).addCartItem(
-                CartState(
-                  product: product,
-                  quantity: 1,
-                  totalPrice: double.tryParse(price) ?? 0.0,
-                ),
-              );
-            },
+            onPressed: _onTap,
             child: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -73,7 +169,7 @@ class ProductView extends ConsumerWidget {
                       width: double.infinity,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
-                        color: imageUrl != null ?Colors.transparent : Colors.grey.shade200,
+                        color: imageUrl != null ? Colors.transparent : Colors.grey.shade200,
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
@@ -99,7 +195,7 @@ class ProductView extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    product['name'] ?? 'Unknown',
+                    widget.product['name'] ?? 'Unknown',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -109,16 +205,17 @@ class ProductView extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  product['description'] != null && product['description'].isNotEmpty ? 
-                    Text(
-                      product['description'],
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
-                      ),
-                    ) : const SizedBox.shrink(),
+                  widget.product['description'] != null && widget.product['description'].isNotEmpty
+                      ? Text(
+                          widget.product['description'],
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                          ),
+                        )
+                      : const SizedBox.shrink(),
                   const SizedBox(height: 8),
                   Text(
                     CurrencyHelper.formatIDR(price),
@@ -131,11 +228,62 @@ class ProductView extends ConsumerWidget {
                 ],
               ),
             ),
-          );
-        },
-        childCount: products.length,
-      ),
+          ),
+          ..._badges.map((badge) => Positioned(
+            top: 0,
+            bottom: 100,
+            left: 0,
+            right: 0,
+            child: AnimatedBuilder(
+              animation: badge.controller,
+              builder: (context, child) {
+                final progress = badge.controller.value;
+                final opacity = progress < 0.6 ? 1.0 : 1.0 - ((progress - 0.6) / 0.4);
+                final yOffset = -70 * progress;
+                
+                return Transform.translate(
+                  offset: Offset(0, yOffset),
+                  child: Opacity(
+                    opacity: opacity,
+                    child: child,
+                  ),
+                );
+              },
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade500,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.green.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Text(
+                    '+1',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          )),
+        ],
       ),
     );
   }
+}
+
+class _BadgeAnimation {
+  final int id;
+  final AnimationController controller;
+  
+  _BadgeAnimation({required this.id, required this.controller});
 }
