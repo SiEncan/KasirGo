@@ -356,7 +356,15 @@ class ProductTable extends ConsumerWidget {
                   ),
                 );
               },
-              child: Row(
+              child: isLoading ?
+              const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                ),
+              ) : Row(
                 children: [
                   Icon(Icons.mode_edit, size: 18, color: Colors.green[600]),
                   const SizedBox(width: 4),
