@@ -9,8 +9,19 @@ final productServiceProvider = Provider<ProductService>((ref) {
 
 class ProductState {
   final List<Map<String, dynamic>> products;
+  final bool isLoading;
 
-  ProductState({this.products = const []});
+  ProductState({this.products = const [], this.isLoading = false});
+
+  ProductState copyWith({
+    List<Map<String, dynamic>>? products,
+    bool? isLoading,
+  }) {
+    return ProductState(
+      products: products ?? this.products,
+      isLoading: isLoading ?? this.isLoading,
+    );
+  }
 }
 
 class ProductNotifier extends StateNotifier<ProductState> {
@@ -19,51 +30,37 @@ class ProductNotifier extends StateNotifier<ProductState> {
   ProductNotifier(this.productService) : super(ProductState());
 
   Future<void> fetchAllProducts() async {
-    try {
-      final data = await productService.getAllProduct();
-      state = ProductState(products: data);
-    } catch (e) {
-      // Auto logout jika refresh token expired
-      if (e.toString().contains('REFRESH_TOKEN_EXPIRED')) {
-        // Token sudah di-clear di auth_service, throw error untuk UI handle
-        throw Exception('Session expired. Please login again.');
-      }
-      
-      rethrow;
-    }
+    final data = await productService.getAllProduct();
+    state = state.copyWith(products: data);
   }
 
   Future<void> addProduct(Map<String, dynamic> payload) async {
+    state = state.copyWith(isLoading: true);
     try {
       await productService.createProduct(payload);
-
-      // Refresh daftar produk setelah penambahan
       await fetchAllProducts();
-
-    } catch (e) {
-      rethrow;
+    } finally {
+      state = state.copyWith(isLoading: false);
     }
   }
 
   Future<void> editProduct(int productId, Map<String, dynamic> payload) async {
+    state = state.copyWith(isLoading: true);
     try {
       await productService.editProduct(productId, payload);
-
-      // Refresh daftar produk setelah pengeditan
       await fetchAllProducts();
-
-    } catch (e) {
-      rethrow;
+    } finally {
+      state = state.copyWith(isLoading: false);
     }
   }
 
   Future<void> deleteProduct(int productId) async {
+    state = state.copyWith(isLoading: true);
     try {
       await productService.deleteProduct(productId);
       await fetchAllProducts();
-
-    } catch (e) {
-      rethrow;
+    } finally {
+      state = state.copyWith(isLoading: false);
     }
   }
 }

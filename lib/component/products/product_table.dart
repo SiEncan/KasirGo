@@ -20,6 +20,8 @@ class ProductTable extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isLoading = ref.watch(productProvider).isLoading;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -88,7 +90,7 @@ class ProductTable extends ConsumerWidget {
                         _buildStockCell(product, flex: 1),
                         _buildPriceCell(product, flex: 2),
                         _buildCostCell(product, flex: 2),
-                        _buildActionCell(context, ref, product, flex: 3),
+                        _buildActionCell(context, ref, product, isLoading: isLoading, flex: 3),
                       ],
                     ),
                   ),
@@ -325,7 +327,7 @@ class ProductTable extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionCell(BuildContext context, WidgetRef ref, Map<String, dynamic> product, {int flex = 3}) {
+  Widget _buildActionCell(BuildContext context, WidgetRef ref, Map<String, dynamic> product, {required bool isLoading, int flex = 3}) {
     return Expanded(
       flex: flex,
       child: Container(
@@ -378,7 +380,7 @@ class ProductTable extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              onPressed: () async {
+              onPressed: isLoading ? null : () async {
                 final confirm = await showDeleteConfirmDialog(
                   context,
                   message: 'Are you sure you want to delete "${product['name']}"? This action cannot be undone.',
@@ -404,17 +406,26 @@ class ProductTable extends ConsumerWidget {
                   }
                 }
               },
-              child: Row(
-                children: [
-                  Icon(Icons.delete, size: 18, color: Colors.red[600]),
-                  const SizedBox(width: 4),
-                  Text('Delete', style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.red[600],
-                  ),),
-                ],
-              ),
+              child: isLoading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                      ),
+                    )
+                  : Row(
+                      children: [
+                        Icon(Icons.delete, size: 18, color: Colors.red[600]),
+                        const SizedBox(width: 4),
+                        Text('Delete', style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red[600],
+                        ),),
+                      ],
+                    ),
             ),
           ],
         ),

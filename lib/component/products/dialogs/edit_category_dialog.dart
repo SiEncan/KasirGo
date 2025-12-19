@@ -37,18 +37,22 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: const BorderRadius.all(Radius.circular(16)),
-          border: Border(
-            bottom: BorderSide(
-              color: Colors.grey.shade200,
-              width: 1,
+    final isLoading = ref.watch(categoryProvider).isLoading;
+
+    return PopScope(
+      canPop: !isLoading,
+      child: Dialog(
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.all(Radius.circular(16)),
+            border: Border(
+              bottom: BorderSide(
+                color: Colors.grey.shade200,
+                width: 1,
+              ),
             ),
           ),
-        ),
         width: 500,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -93,7 +97,7 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
                   ),
                   const Spacer(),
                   IconButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: isLoading ? null : () => Navigator.pop(context),
                     icon: const Icon(Icons.close),
                     color: Colors.grey.shade600,
                   ),
@@ -204,7 +208,7 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: () async {
+                        onPressed: isLoading ? null : () async {
                           final confirm = await showDeleteConfirmDialog(
                             context,
                             message: 'Are you sure you want to delete "${widget.category['name']}"? This action cannot be undone.',
@@ -231,8 +235,17 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
                             }
                           }
                         },
-                        icon: const Icon(Icons.delete_outline, size: 18),
-                        label: const Text("Delete Category"),
+                        icon: isLoading 
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Icon(Icons.delete_outline, size: 18),
+                        label: Text(isLoading ? "Deleting..." : "Delete Category"),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red.shade600,
                           foregroundColor: Colors.white,
@@ -267,7 +280,7 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   OutlinedButton.icon(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: isLoading ? null : () => Navigator.pop(context),
                     icon: const Icon(Icons.close, size: 18),
                     label: const Text("Cancel"),
                     style: OutlinedButton.styleFrom(
@@ -281,7 +294,7 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton.icon(
-                    onPressed: () async {
+                    onPressed: isLoading ? null : () async {
                       if (nameController.text.trim().isEmpty) {
                         showErrorDialog(context, 'Category name is required', title: 'Validation Error');
                         return;
@@ -308,8 +321,17 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
                         showErrorDialog(context, e.toString(), title: 'Update Failed');
                       }
                     },
-                    icon: const Icon(Icons.check, size: 18),
-                    label: const Text("Save Changes"),
+                    icon: isLoading 
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Icon(Icons.check, size: 18),
+                    label: Text(isLoading ? "Saving..." : "Save Changes"),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange.shade600,
                       foregroundColor: Colors.white,
@@ -325,6 +347,7 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

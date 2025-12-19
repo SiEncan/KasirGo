@@ -1,14 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
+import '../utils/app_exception.dart';
 import 'dio_client.dart';
-
-class ProductException implements Exception {
-  final String message;
-  ProductException(this.message);
-
-  @override
-  String toString() => message;
-}
 
 class ProductService {
   final DioClient dioClient;
@@ -20,17 +13,7 @@ class ProductService {
       final response = await dioClient.dio.get('/products/');
       return List<Map<String, dynamic>>.from(response.data['data']);
     } on DioException catch (e) {
-      // Check jika refresh token expired
-      if (e.error != null && e.error.toString().contains('REFRESH_TOKEN_EXPIRED')) {
-        throw Exception('REFRESH_TOKEN_EXPIRED');
-      }
-      
-      if (e.response != null) {
-        final errorMessage = e.response?.data['message'] ?? 'Failed to fetch products';
-        throw ProductException(errorMessage);
-      } else {
-        throw ProductException('Failed to fetch products');
-      }
+      throw _handleError(e, 'Failed to fetch products');
     }
   }
 
@@ -59,17 +42,7 @@ class ProductService {
 
       await dioClient.dio.post('/product/create/', data: formData);
     } on DioException catch (e) {
-      // Check jika refresh token expired
-      if (e.error != null && e.error.toString().contains('REFRESH_TOKEN_EXPIRED')) {
-        throw Exception('REFRESH_TOKEN_EXPIRED');
-      }
-      
-      if (e.response != null) {
-        final errorMessage = e.response?.data['message'] ?? 'Failed to create product';
-        throw ProductException(errorMessage);
-      } else {
-        throw ProductException('Failed to create product');
-      }
+      throw _handleError(e, 'Failed to create product');
     }
   }
 
@@ -98,17 +71,7 @@ class ProductService {
 
       await dioClient.dio.patch('/product/$productId/', data: formData);
     } on DioException catch (e) {
-      // Check jika refresh token expired
-      if (e.error != null && e.error.toString().contains('REFRESH_TOKEN_EXPIRED')) {
-        throw Exception('REFRESH_TOKEN_EXPIRED');
-      }
-      
-      if (e.response != null) {
-        final errorMessage = e.response?.data['message'] ?? 'Failed to edit product';
-        throw ProductException(errorMessage);
-      } else {
-        throw ProductException('Failed to edit product');
-      }
+      throw _handleError(e, 'Failed to edit product');
     }
   }
 
@@ -116,18 +79,13 @@ class ProductService {
     try {
       await dioClient.dio.delete('/product/$productId/');
     } on DioException catch (e) {
-      // Check jika refresh token expired
-      if (e.error != null && e.error.toString().contains('REFRESH_TOKEN_EXPIRED')) {
-        throw Exception('REFRESH_TOKEN_EXPIRED');
-      }
-      
-      if (e.response != null) {
-        final errorMessage = e.response?.data['message'] ?? 'Failed to delete product';
-        throw ProductException(errorMessage);
-      } else {
-        throw ProductException('Failed to delete product');
-      }
+      throw _handleError(e, 'Failed to delete product');
     }
   }
 
+  /// Extract AppException from DioException or create fallback
+  AppException _handleError(DioException e, String fallback) {
+    if (e.error is AppException) return e.error as AppException;
+    return AppException(fallback);
+  }
 }

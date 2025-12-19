@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:kasir_go/utils/dialog_helper.dart';
 import 'package:kasir_go/utils/session_helper.dart';
+import 'package:kasir_go/utils/snackbar_helper.dart';
 import '../providers/auth_provider.dart';
 import 'login_screen.dart';
 
@@ -23,11 +24,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   String? _errorMessage;
   Map<String, dynamic>? _profile;
   
-  late TextEditingController _usernameController;
-  late TextEditingController _firstNameController;
-  late TextEditingController _lastNameController;
-  late TextEditingController _emailController;
-  late TextEditingController _phoneController;
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _oldPasswordController = TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
@@ -36,30 +37,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   void initState() {
     super.initState();
     
-    Future.microtask(() async {
-      try {
-        final profile = await ref.read(authProvider.notifier).getProfile();
-        if (!mounted) return;
-        
-        setState(() {
-          _profile = profile;
-          _isLoading = false;
-        });
-      } catch (e) {
-        final ctx = context; // Capture before async
-        if (!mounted) return;
-        if (isSessionExpiredError(e)) {
-          if (!ctx.mounted) return; // Check ctx.mounted
-          await handleSessionExpired(ctx, ref);
-          return;
-        }
-        
-        setState(() {
-          _errorMessage = e.toString();
-          _isLoading = false;
-        });
-      }
-    });
+    Future.microtask(() => _refreshData());
   }
 
   @override
@@ -73,6 +51,38 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _refreshData() async {
+    try {
+      final profile = await ref.read(authProvider.notifier).getProfile();
+      if (!mounted) return;
+      
+      setState(() {
+        _profile = profile;
+        _isLoading = false;
+        _usernameController.text = profile['username'] ?? '';
+        _firstNameController.text = profile['first_name'] ?? '';
+        _lastNameController.text = profile['last_name'] ?? '';
+        _emailController.text = profile['email'] ?? '';
+        _phoneController.text = profile['phone'] ?? '';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      
+      if (isSessionExpiredError(e)) {
+        await handleSessionExpired(context, ref);
+        return;
+      }
+      
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+
+      showErrorSnackBar(context, e.toString(), title: 'Failed to fetch profile: ');
+    }
   }
 
   @override
@@ -149,30 +159,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           _errorMessage = null;
                         });
                         // Trigger initState logic again
-                        Future.microtask(() async {
-                          try {
-                            final profile = await ref.read(authProvider.notifier).getProfile();
-                            if (!mounted) return;
-                            setState(() {
-                              _profile = profile;
-                              _isLoading = false;
-                            });
-                          } catch (e) {
-                            final ctx = context;
-                            if (!mounted) return;
-
-                            if (isSessionExpiredError(e)) {
-                              if (!ctx.mounted) return;
-                              await handleSessionExpired(ctx, ref);
-                              return;
-                            }
-
-                            setState(() {
-                              _errorMessage = e.toString();
-                              _isLoading = false;
-                            });
-                          }
-                        });
+                        _refreshData();
                       },
                     ),
                     const SizedBox(width: 12),
@@ -208,17 +195,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final username = profile['username'] ?? '-';
     final firstName = profile['first_name'] ?? '-';
     final lastName = profile['last_name'] ?? '-';
-    final email = profile['email'] ?? '-';
-    final phone = profile['phone'] ?? '-';
     final role = profile['role'] ?? '-';
-
-    if (!_isEditing) {
-      _usernameController = TextEditingController(text: username);
-      _firstNameController = TextEditingController(text: firstName);
-      _lastNameController = TextEditingController(text: lastName);
-      _emailController = TextEditingController(text: email);
-      _phoneController = TextEditingController(text: phone);
-    }
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -735,8 +712,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     setState(() {
                       _isEditing = false;
                     });
-                    
-                    ref.invalidate(userProfileProvider);
                     
                     showSuccessDialog(context, 'Your profile has been updated successfully', title: 'Profile Updated');
                   } catch (e) {

@@ -1,50 +1,51 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decode/jwt_decode.dart';
+import '../utils/app_exception.dart';
 import '../utils/token_storage.dart';
 import 'dio_client.dart';
-
-class AuthException implements Exception {
-  final String message;
-  AuthException(this.message);
-  
-  @override
-  String toString() => message; // Tanpa prefix "Exception:"
-}
 
 class AuthService {
   final String baseUrl = "http://10.0.2.2:8000/api";
   // final String baseUrl = "http://localhost:8000/api";
   final TokenStorage tokenStorage;
-  DioClient? dioClient; // Optional untuk avoid circular dependency
+  DioClient? dioClient;
 
   AuthService({required this.tokenStorage, this.dioClient});
 
+  /// Login using http package (no Dio to avoid circular dependency)
   Future<Map<String, dynamic>> login(String username, String password) async {
     final url = Uri.parse("$baseUrl/auth/login/");
 
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "username": username,
-        "password": password,
-      }),
-    );
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "username": username,
+          "password": password,
+        }),
+      ).timeout(const Duration(seconds: 10));
 
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      try {
-        final errorJson = jsonDecode(response.body);
-        if (errorJson['detail'] == 'No active account found with the given credentials') {
-          throw AuthException('Username or password is wrong');
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        try {
+          final errorJson = jsonDecode(response.body);
+          if (errorJson['detail'] == 'No active account found with the given credentials') {
+            throw AppException.server('Username or password is wrong');
+          }
+          throw AppException.server(errorJson['detail'] ?? 'Login failed');
+        } on FormatException {
+          throw AppException.server('Login failed');
         }
-        throw AuthException(errorJson['detail']);
-      } on FormatException {
-        throw AuthException('Login failed');
       }
+    } on TimeoutException {
+      throw AppException.serverTimeout(); // Server tidak merespon
+    } on http.ClientException {
+      throw AppException.network(); // Masalah internet user
     }
   }
 
@@ -56,28 +57,34 @@ class AuthService {
     return payload['user_id'];
   }
 
+  /// Refresh token using http package (no Dio to avoid circular dependency)
   Future<void> refreshAccessToken() async {
     final refreshToken = await tokenStorage.getRefreshToken();
     if (refreshToken == null) {
       await tokenStorage.clear();
-      throw AuthException("REFRESH_TOKEN_EXPIRED");
+      throw AppException.sessionExpired();
     }
 
     final url = Uri.parse("$baseUrl/auth/refresh/");
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"refresh": refreshToken}),
-    );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      await tokenStorage.saveTokens(data['access'], data['refresh'] ?? refreshToken);
-    } else {
-      // refresh gagal maka logout
-      print('Refresh token expired or invalid');
-      await tokenStorage.clear();
-      throw AuthException("REFRESH_TOKEN_EXPIRED");
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"refresh": refreshToken}),
+      ).timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        await tokenStorage.saveTokens(data['access'], data['refresh'] ?? refreshToken);
+      } else {
+        await tokenStorage.clear();
+        throw AppException.sessionExpired();
+      }
+    } on TimeoutException {
+      throw AppException.serverTimeout(); // Server tidak merespon
+    } on http.ClientException {
+      throw AppException.network(); // Masalah internet user
     }
   }
 
@@ -86,16 +93,7 @@ class AuthService {
       final response = await dioClient!.dio.get('/user/$userId/');
       return response.data['data'];
     } on DioException catch (e) {
-      // Preserve REFRESH_TOKEN_EXPIRED error
-      if (e.error != null && e.error.toString().contains('REFRESH_TOKEN_EXPIRED')) {
-        throw Exception('REFRESH_TOKEN_EXPIRED');
-      }
-      
-      if (e.response != null) {
-        throw Exception("Failed to fetch profile: ${e.response?.data}");
-      } else {
-        throw Exception("Failed to fetch profile");
-      }
+      throw _handleError(e, 'Failed to fetch profile');
     }
   }
 
@@ -120,7 +118,7 @@ class AuthService {
       );
       return response.data['data'];
     } on DioException catch (e) {
-      throw Exception("Failed to update profile: ${e.response?.data}");
+      throw _handleError(e, 'Failed to update profile');
     }
   }
 
@@ -138,13 +136,13 @@ class AuthService {
         },
       );
     } on DioException catch (e) {
-      if (e.response != null) {
-        final errorMessage = e.response?.data['message'] ?? 'Failed to change password';
-        throw AuthException(errorMessage);
-      } else {
-        throw AuthException("Failed to change password");
-      }
+      throw _handleError(e, 'Failed to change password');
     }
   }
 
+  /// Extract AppException from DioException or create fallback
+  AppException _handleError(DioException e, String fallback) {
+    if (e.error is AppException) return e.error as AppException;
+    return AppException(fallback);
+  }
 }

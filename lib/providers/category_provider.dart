@@ -21,8 +21,19 @@ final categoryServiceProvider = Provider<CategoryService>((ref) {
 
 class CategoryState {
   final List<Map<String, dynamic>> categories;
+  final bool isLoading;
 
-  CategoryState({this.categories = const []});
+  CategoryState({this.categories = const [], this.isLoading = false});
+
+  CategoryState copyWith({
+    List<Map<String, dynamic>>? categories,
+    bool? isLoading,
+  }) {
+    return CategoryState(
+      categories: categories ?? this.categories,
+      isLoading: isLoading ?? this.isLoading,
+    );
+  }
 }
 
 class CategoryNotifier extends StateNotifier<CategoryState> {
@@ -32,48 +43,38 @@ class CategoryNotifier extends StateNotifier<CategoryState> {
   CategoryNotifier(this.service, this.ref) : super(CategoryState());
 
   Future<void> fetchAllCategories() async {
-    try {
-      final data = await service.getAllCategories();
-      state = CategoryState(categories: data);
-    } catch (e) {
-      // Auto logout jika refresh token expired
-      if (e.toString().contains('REFRESH_TOKEN_EXPIRED')) {
-        // Token sudah di-clear di auth_service, throw error untuk UI handle
-        throw Exception('Session expired. Please login again.');
-      }
-      
-      rethrow;
-    }
+    final data = await service.getAllCategories();
+    state = state.copyWith(categories: data);
   }
 
   Future<void> addCategory(Map<String, dynamic> payload) async {
+    state = state.copyWith(isLoading: true);
     try {
       await service.createCategory(payload);
       await fetchAllCategories();
-    } catch (e) {
-      rethrow;
+    } finally {
+      state = state.copyWith(isLoading: false);
     }
   }
 
   Future<void> editCategory(int categoryId, Map<String, dynamic> payload) async {
+    state = state.copyWith(isLoading: true);
     try {
       await service.editCategory(categoryId, payload);
       await fetchAllCategories();
-    } catch (e) {
-      rethrow;
+    } finally {
+      state = state.copyWith(isLoading: false);
     }
   }
 
   Future<void> deleteCategory(int categoryId) async {
+    state = state.copyWith(isLoading: true);
     try {
       await service.deleteCategory(categoryId);
       await fetchAllCategories();
-
-      // Refresh product list setelah delete category agar data 
-      // dengan category yang dihapus jadi null
       await ref.read(productProvider.notifier).fetchAllProducts();
-    } catch (e) {
-      rethrow;
+    } finally {
+      state = state.copyWith(isLoading: false);
     }
   }
 }

@@ -96,8 +96,12 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.white,
+    final isLoading = ref.watch(productProvider).isLoading;
+
+    return PopScope(
+      canPop: !isLoading,
+      child: Dialog(
+        backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -147,7 +151,7 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
                   ),
                   const Spacer(),
                   IconButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: isLoading ? null : () => Navigator.pop(context),
                     icon: const Icon(Icons.close),
                     color: Colors.grey,
                   ),
@@ -430,7 +434,7 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: isLoading ? null : () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
@@ -446,7 +450,7 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton(
-                    onPressed: () async {
+                    onPressed: isLoading ? null : () async {
                       if (nameController.text.trim().isEmpty) {
                         showErrorDialog(context, 'Product name is required', title: 'Validation Error');
                         return;
@@ -513,19 +517,29 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text(
-                      "Save Changes",
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    child: isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Text(
+                            "Save Changes",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                   ),
                 ],
               ),
             ),
           ],
         ),
+      ),
       ),
     );
   }

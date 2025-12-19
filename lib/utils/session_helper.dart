@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../screen/login_screen.dart';
+import 'app_exception.dart';
 import 'snackbar_helper.dart';
 
 /// Helper function untuk handle session expired dengan informasi ke user
-/// Digunakan untuk operasi CREATE/UPDATE/DELETE
 Future<void> handleSessionExpired(
   BuildContext context,
   WidgetRef ref, {
@@ -34,8 +34,11 @@ Future<void> handleSessionExpired(
 
 /// Helper function untuk check apakah error adalah session expired
 bool isSessionExpiredError(dynamic error) {
+  if (error is AppException) {
+    return error.isSessionExpired;
+  }
+  // Fallback for legacy string-based errors
   final errorString = error.toString();
-  return errorString.contains('REFRESH_TOKEN_EXPIRED') || 
-         errorString.contains('Session expired') || 
+  return errorString.contains('Session expired') || 
          errorString.contains('User not logged in');
 }

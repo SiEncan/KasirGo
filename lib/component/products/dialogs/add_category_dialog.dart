@@ -25,12 +25,16 @@ class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-        ),
+    final isLoading = ref.watch(categoryProvider).isLoading;
+
+    return PopScope(
+      canPop: !isLoading,
+      child: Dialog(
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
         width: 500,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -75,7 +79,7 @@ class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
                   ),
                   const Spacer(),
                   IconButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: isLoading ? null : () => Navigator.pop(context),
                     icon: const Icon(Icons.close),
                     color: Colors.grey.shade600,
                   ),
@@ -242,7 +246,7 @@ class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   OutlinedButton.icon(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: isLoading ? null : () => Navigator.pop(context),
                     icon: const Icon(Icons.close, size: 18),
                     label: const Text("Cancel"),
                     style: OutlinedButton.styleFrom(
@@ -257,7 +261,7 @@ class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton.icon(
-                    onPressed: () async {
+                    onPressed: isLoading ? null : () async {
                       if (nameController.text.trim().isEmpty) {
                         showErrorDialog(context, 'Category name is required', title: 'Validation Error');
                         return;
@@ -284,8 +288,17 @@ class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
                         showErrorDialog(context, e.toString(), title: 'Failed to Add Category');
                       }
                     },
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text("Create Category"),
+                    icon: isLoading 
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Icon(Icons.add, size: 18),
+                    label: Text(isLoading ? "Creating..." : "Create Category"),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange.shade600,
                       foregroundColor: Colors.white,
@@ -302,6 +315,7 @@ class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
