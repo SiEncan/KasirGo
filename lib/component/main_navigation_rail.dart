@@ -96,7 +96,7 @@ class MainNavigationRail extends StatelessWidget {
           _buildDestination(Iconsax.home5, 'Home', 'home'),
           _buildDestination(Iconsax.category5, 'Category', 'category'),
           _buildDestination(Icons.fastfood, 'Products', 'products'),
-          _buildDestination(Iconsax.profile_circle4, 'Profile', 'profile'),
+          _buildDestination(Iconsax.profile_circle5, 'Profile', 'profile'),
           _buildDestination(Icons.settings, 'Settings', 'settings'),
         ],
       ),
