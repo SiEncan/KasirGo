@@ -202,9 +202,10 @@ class CheckoutLeftPanel extends ConsumerWidget {
                                         children: [
                                           Text(
                                             item.product['name'],
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontWeight: FontWeight.w600,
-                                              fontSize: 15,
+                                              fontSize: 16,
+                                              color: Colors.grey.shade800,
                                             ),
                                           ),
                                           if (item.product['description'] !=
@@ -288,7 +289,9 @@ class CheckoutLeftPanel extends ConsumerWidget {
                                   CurrencyHelper.formatIDR(
                                       item.product['price']),
                                   style: TextStyle(
-                                    color: Colors.grey.shade700,
+                                    color: Colors.grey.shade600,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -320,8 +323,10 @@ class CheckoutLeftPanel extends ConsumerWidget {
                                 child: Text(
                                   CurrencyHelper.formatIDR(
                                       item.totalPrice.toString()),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: Colors.grey.shade800,
                                   ),
                                   textAlign: TextAlign.end,
                                 ),

@@ -168,6 +168,15 @@ class CheckoutRightPanel extends StatelessWidget {
                         const SizedBox(width: 10),
                         Expanded(
                           child: PaymentMethodButton(
+                            icon: LucideIcons.landmark,
+                            label: 'BCA VA',
+                            isSelected: selectedPaymentMethod == 'BCA VA',
+                            onTap: () => onPaymentMethodChanged('BCA VA'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: PaymentMethodButton(
                             icon: LucideIcons.qrCode,
                             label: 'QRIS',
                             isSelected: selectedPaymentMethod == 'QRIS',
@@ -254,11 +263,12 @@ class CheckoutRightPanel extends StatelessWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
+                              Text(
                                 'Total',
                                 style: TextStyle(
-                                  fontSize: 18,
+                                  fontSize: 20,
                                   fontWeight: FontWeight.bold,
+                                  color: Colors.grey.shade800,
                                 ),
                               ),
                               Text(
@@ -303,7 +313,7 @@ class CheckoutRightPanel extends StatelessWidget {
                       Text(
                         'Confirm Payment • ${CurrencyHelper.formatIDR(total.toString())}',
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),

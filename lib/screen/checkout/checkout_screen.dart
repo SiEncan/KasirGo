@@ -103,7 +103,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final transactionId = transaction['id'];
 
     // 3. Handle Payment
-    if (selectedPaymentMethod == 'QRIS') {
+    if (selectedPaymentMethod == 'QRIS' || selectedPaymentMethod == 'BCA VA') {
       if (mounted) {
         showDialog(
           context: context,
@@ -111,10 +111,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           builder: (_) => const Center(child: CircularProgressIndicator()),
         );
       }
-
+      final paymentMethod = selectedPaymentMethod == 'QRIS' ? 'SP' : 'BC';
       final success = await ref.read(paymentProvider.notifier).createPayment({
         'transaction_id': transactionId,
-        'payment_method': 'BC',
+        'payment_method': paymentMethod,
       });
 
       if (mounted) Navigator.pop(context); // Close loading
@@ -161,6 +161,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         child: Row(
           children: [
             const CheckoutLeftPanel(),
+            VerticalDivider(
+              color: Colors.grey.shade300,
+              thickness: 1,
+              width: 1,
+            ),
             CheckoutRightPanel(
               selectedOrderType: selectedOrderType,
               onOrderTypeChanged: (val) =>

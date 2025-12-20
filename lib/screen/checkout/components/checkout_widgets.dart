@@ -40,6 +40,7 @@ class OrderTypeButton extends StatelessWidget {
               label,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
+                fontSize: 15,
                 color: isSelected ? Colors.deepOrange : Colors.grey.shade600,
               ),
             ),
@@ -92,6 +93,7 @@ class PaymentMethodButton extends StatelessWidget {
               label,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
+                fontSize: 15,
                 color: isSelected ? Colors.deepOrange : Colors.grey.shade600,
               ),
             ),
@@ -128,7 +130,7 @@ class SummaryRow extends StatelessWidget {
           value,
           style: const TextStyle(
             fontWeight: FontWeight.w600,
-            fontSize: 14,
+            fontSize: 15,
           ),
         ),
       ],
