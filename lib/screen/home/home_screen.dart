@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kasir_go/component/home/category_section.dart';
-import 'package:kasir_go/component/home/header_section.dart';
-import 'package:kasir_go/component/home/order_detail.dart';
-import 'package:kasir_go/component/home/product_view.dart';
-import 'package:kasir_go/component/home/skeleton_widgets.dart';
 import 'package:kasir_go/providers/category_provider.dart';
 import 'package:kasir_go/providers/product_provider.dart';
+import 'package:kasir_go/screen/home/components/category_section.dart';
+import 'package:kasir_go/screen/home/components/header_section.dart';
+import 'package:kasir_go/screen/home/components/order_detail.dart';
+import 'package:kasir_go/screen/home/components/product_view.dart';
+import 'package:kasir_go/screen/home/components/skeleton_widgets.dart';
 import 'package:kasir_go/utils/session_helper.dart';
 import 'package:kasir_go/utils/snackbar_helper.dart';
 
@@ -117,10 +117,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           });
 
     var filteredProducts = selectedCategoryId == 'all'
-        ? productsState.products.where((product) => product['is_available'] == true).toList()
+        ? productsState.products
+            .where((product) => product['is_available'] == true)
+            .toList()
         : productsState.products
             .where((product) =>
-                product['category'].toString() == selectedCategoryId && product['is_available'] == true)
+                product['category'].toString() == selectedCategoryId &&
+                product['is_available'] == true)
             .toList();
 
     if (_searchQuery.isNotEmpty) {

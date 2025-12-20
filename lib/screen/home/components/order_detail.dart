@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir_go/providers/cart_provider.dart';
-import 'package:kasir_go/screen/checkout_screen.dart';
+import 'package:kasir_go/screen/checkout/checkout_screen.dart';
 import 'package:kasir_go/utils/currency_helper.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -323,96 +323,104 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
                 ),
           const SizedBox(width: 12),
           Expanded(
-            child: Row(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.product['name'],
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
+              child: Row(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.product['name'],
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      CurrencyHelper.formatIDR(item.totalPrice),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    CurrencyHelper.formatIDR(item.totalPrice),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
                     ),
-                  ],
-                ),
-                const Spacer(),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        InkWell(
-                          onTap: () {
-                            ref.read(cartProvider.notifier).decreaseQuantity(item);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade200,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(Icons.remove, size: 16),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      InkWell(
+                        onTap: () {
+                          ref
+                              .read(cartProvider.notifier)
+                              .decreaseQuantity(item);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          item.quantity.toString(),
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(width: 12),
-                        InkWell(
-                          onTap: () {
-                            ref.read(cartProvider.notifier).increaseQuantity(item);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade200,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(Icons.add, size: 16),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    InkWell(
-                      onTap: () => _showNotesDialog(item),
-                      borderRadius: BorderRadius.circular(4),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(LucideIcons.pencilLine, size: 13, color: Colors.grey.shade500),
-                            const SizedBox(width: 4),
-                            Text(
-                              item.notes != null && item.notes!.isNotEmpty ? 'Edit' : 'Notes',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey.shade500,
-                              ),
-                            ),
-                          ],
+                          child: const Icon(Icons.remove, size: 16),
                         ),
                       ),
+                      const SizedBox(width: 12),
+                      Text(
+                        item.quantity.toString(),
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(width: 12),
+                      InkWell(
+                        onTap: () {
+                          ref
+                              .read(cartProvider.notifier)
+                              .increaseQuantity(item);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.add, size: 16),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  InkWell(
+                    onTap: () => _showNotesDialog(item),
+                    borderRadius: BorderRadius.circular(4),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 2),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(LucideIcons.pencilLine,
+                              size: 13, color: Colors.grey.shade500),
+                          const SizedBox(width: 4),
+                          Text(
+                            item.notes != null && item.notes!.isNotEmpty
+                                ? 'Edit'
+                                : 'Notes',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
-              ],
-            )
-          ),
+                  ),
+                ],
+              ),
+            ],
+          )),
         ],
       ),
     );
@@ -422,7 +430,7 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
   Widget build(BuildContext context) {
     // Listen to cart changes for animation
     ref.listen<List<CartState>>(cartProvider, _onCartChanged);
-    
+
     final cartItems = ref.watch(cartProvider);
 
     return Expanded(
@@ -434,7 +442,8 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
           children: [
             Row(
               children: [
-                Icon(LucideIcons.notepadText,
+                Icon(
+                  LucideIcons.notepadText,
                   size: 24,
                   color: Colors.grey.shade600,
                 ),
@@ -464,11 +473,8 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
                     children: [
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Icon(
-                          Iconsax.refresh,
-                          size: 16,
-                          color: Colors.grey[800]
-                        ),
+                        child: Icon(Iconsax.refresh,
+                            size: 16, color: Colors.grey[800]),
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -493,7 +499,9 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
                     key: _listKey,
                     initialItemCount: _trackedIds.length,
                     itemBuilder: (context, index, animation) {
-                      if (index >= cartItems.length) return const SizedBox.shrink();
+                      if (index >= cartItems.length) {
+                        return const SizedBox.shrink();
+                      }
                       return _buildCartItem(cartItems[index], animation);
                     },
                   ),
@@ -521,12 +529,18 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
                             const SizedBox(height: 16),
                             Text(
                               "Cart is Empty",
-                              style: TextStyle(fontSize: 17, color: Colors.grey[700], fontWeight: FontWeight.w500),
+                              style: TextStyle(
+                                  fontSize: 17,
+                                  color: Colors.grey[700],
+                                  fontWeight: FontWeight.w500),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               "Tap products to add them",
-                              style: TextStyle(fontSize: 14, color: Colors.grey[500], fontWeight: FontWeight.w500),
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[500],
+                                  fontWeight: FontWeight.w500),
                             ),
                           ],
                         ),
@@ -564,8 +578,10 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text("Service Charges"),
-                    cartItems.isEmpty ? Text(CurrencyHelper.formatIDR("0")) : Text(CurrencyHelper.formatIDR("2000")),
+                    const Text("Service Charge"),
+                    cartItems.isEmpty
+                        ? Text(CurrencyHelper.formatIDR("0"))
+                        : Text(CurrencyHelper.formatIDR("2000")),
                   ],
                 ),
                 const Divider(height: 24),
@@ -580,9 +596,12 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
                     Text(
                       CurrencyHelper.formatIDR(
                           (ref.read(cartProvider.notifier).getTotalCartPrice() +
-                            ref.read(cartProvider.notifier).getTotalCartPrice() * 0.1 +
-                            (cartItems.isEmpty ? 0 : 2000))
-                          .toString()),
+                                  ref
+                                          .read(cartProvider.notifier)
+                                          .getTotalCartPrice() *
+                                      0.1 +
+                                  (cartItems.isEmpty ? 0 : 2000))
+                              .toString()),
                       style: const TextStyle(
                           fontSize: 20, fontWeight: FontWeight.bold),
                     ),

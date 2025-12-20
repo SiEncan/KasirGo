@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:kasir_go/component/products/dialogs/edit_product_dialog.dart';
+import 'package:kasir_go/screen/products/components/dialogs/edit_product_dialog.dart';
 import 'package:kasir_go/providers/product_provider.dart';
 import 'package:kasir_go/utils/currency_helper.dart';
 import 'package:kasir_go/utils/snackbar_helper.dart';
@@ -43,61 +43,62 @@ class ProductTable extends ConsumerWidget {
               _buildHeaderCell('Action', flex: 3, isLast: true),
             ],
           ),
-          products.isEmpty ?
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Iconsax.box_remove,
-                  size: 80,
-                  color: Colors.grey.shade300,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'No products found',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey.shade500,
-                  ),
-                ),
-              ],
-            ),
-          ) :
-          Expanded(
-            child:ListView.builder(
-              padding: EdgeInsets.zero,
-              itemCount: products.length,
-              itemBuilder: (context, index) {
-                final product = products[index];
-                return Container(
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Colors.grey.shade200,
-                        width: 1,
+          products.isEmpty
+              ? Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Iconsax.box_remove,
+                        size: 80,
+                        color: Colors.grey.shade300,
                       ),
-                    ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No products found',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                    ],
                   ),
-                  child: IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildProductCell(product, flex: 3),
-                        _buildStatusCell(product, flex: 2),
-                        _buildStockCell(product, flex: 1),
-                        _buildPriceCell(product, flex: 2),
-                        _buildCostCell(product, flex: 2),
-                        _buildActionCell(context, ref, product, isLoading: isLoading, flex: 3),
-                      ],
-                    ),
+                )
+              : Expanded(
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    itemCount: products.length,
+                    itemBuilder: (context, index) {
+                      final product = products[index];
+                      return Container(
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Colors.grey.shade200,
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        child: IntrinsicHeight(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildProductCell(product, flex: 3),
+                              _buildStatusCell(product, flex: 2),
+                              _buildStockCell(product, flex: 1),
+                              _buildPriceCell(product, flex: 2),
+                              _buildCostCell(product, flex: 2),
+                              _buildActionCell(context, ref, product,
+                                  isLoading: isLoading, flex: 3),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
-          ),
+                ),
         ],
       ),
     );
@@ -112,11 +113,11 @@ class ProductTable extends ConsumerWidget {
         decoration: BoxDecoration(
           border: Border(
             right: isLast
-          ? BorderSide.none
-          : BorderSide(
-              color: Colors.grey.shade300,
-              width: 1,
-            ),
+                ? BorderSide.none
+                : BorderSide(
+                    color: Colors.grey.shade300,
+                    width: 1,
+                  ),
             bottom: BorderSide(
               color: Colors.grey.shade300,
               width: 1,
@@ -151,44 +152,46 @@ class ProductTable extends ConsumerWidget {
         child: Row(
           children: [
             product['image'] != null
-              ? Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    image: DecorationImage(
-                      image: NetworkImage("http://10.0.2.2:8000${product['image']}"),
-                      fit: BoxFit.cover,
+                ? Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      image: DecorationImage(
+                        image: NetworkImage(
+                            "http://10.0.2.2:8000${product['image']}"),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  )
+                : Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFF9800), Color(0xFFE65100)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Text(
+                        product['name'][0].toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
-                )
-              : Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFF9800), Color(0xFFE65100)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Center(
-                child: Text(
-                  product['name'][0].toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     product['name'],
@@ -199,15 +202,18 @@ class ProductTable extends ConsumerWidget {
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    product['description'] ?? '',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
+                  if (product['description'] != null &&
+                      product['description'].toString().isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      product['description'],
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -327,7 +333,9 @@ class ProductTable extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionCell(BuildContext context, WidgetRef ref, Map<String, dynamic> product, {required bool isLoading, int flex = 3}) {
+  Widget _buildActionCell(
+      BuildContext context, WidgetRef ref, Map<String, dynamic> product,
+      {required bool isLoading, int flex = 3}) {
     return Expanded(
       flex: flex,
       child: Container(
@@ -356,25 +364,30 @@ class ProductTable extends ConsumerWidget {
                   ),
                 );
               },
-              child: isLoading ?
-              const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
-                ),
-              ) : Row(
-                children: [
-                  Icon(Icons.mode_edit, size: 18, color: Colors.green[600]),
-                  const SizedBox(width: 4),
-                  Text('Edit', style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.green[600],
-                  ),),
-                ],
-              ),
+              child: isLoading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                      ),
+                    )
+                  : Row(
+                      children: [
+                        Icon(Icons.mode_edit,
+                            size: 18, color: Colors.green[600]),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Edit',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.green[600],
+                          ),
+                        ),
+                      ],
+                    ),
             ),
             OutlinedButton(
               style: OutlinedButton.styleFrom(
@@ -388,32 +401,38 @@ class ProductTable extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              onPressed: isLoading ? null : () async {
-                final confirm = await showDeleteConfirmDialog(
-                  context,
-                  message: 'Are you sure you want to delete "${product['name']}"? This action cannot be undone.',
-                  title: 'Delete Product',
-                );
+              onPressed: isLoading
+                  ? null
+                  : () async {
+                      final confirm = await showDeleteConfirmDialog(
+                        context,
+                        message:
+                            'Are you sure you want to delete "${product['name']}"? This action cannot be undone.',
+                        title: 'Delete Product',
+                      );
 
-                if (confirm == true && context.mounted) {
-                  try {
-                    await ref.read(productProvider.notifier).deleteProduct(product['id']);
-                    if (context.mounted) {
-                      showSuccessSnackBar(context, 'Product deleted successfully');
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      
-                      if (isSessionExpiredError(e)) {
-                        await handleSessionExpired(context, ref);
-                        return;
+                      if (confirm == true && context.mounted) {
+                        try {
+                          await ref
+                              .read(productProvider.notifier)
+                              .deleteProduct(product['id']);
+                          if (context.mounted) {
+                            showSuccessSnackBar(
+                                context, 'Product deleted successfully');
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            if (isSessionExpiredError(e)) {
+                              await handleSessionExpired(context, ref);
+                              return;
+                            }
+
+                            showErrorDialog(context, e.toString(),
+                                title: 'Delete Failed');
+                          }
+                        }
                       }
-                      
-                      showErrorDialog(context, e.toString(), title: 'Delete Failed');
-                    }
-                  }
-                }
-              },
+                    },
               child: isLoading
                   ? const SizedBox(
                       width: 18,
@@ -427,11 +446,14 @@ class ProductTable extends ConsumerWidget {
                       children: [
                         Icon(Icons.delete, size: 18, color: Colors.red[600]),
                         const SizedBox(width: 4),
-                        Text('Delete', style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red[600],
-                        ),),
+                        Text(
+                          'Delete',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red[600],
+                          ),
+                        ),
                       ],
                     ),
             ),

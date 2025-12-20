@@ -95,7 +95,8 @@ class CategorySection extends SliverPersistentHeaderDelegate {
                     final itemCount = productsState.products
                         .where((product) =>
                             product['category'].toString() ==
-                            categoryId.toString() && product['is_available'] == true)
+                                categoryId.toString() &&
+                            product['is_available'] == true)
                         .length;
                     return Padding(
                       padding: const EdgeInsets.only(right: 12),
@@ -132,8 +133,7 @@ class CategorySection extends SliverPersistentHeaderDelegate {
         padding:
             const EdgeInsets.only(left: 24, right: 48, top: 16, bottom: 16),
         side: BorderSide(
-          color:
-              isSelected ? Colors.deepOrange.shade400 : Colors.grey.shade300,
+          color: isSelected ? Colors.deepOrange.shade400 : Colors.grey.shade300,
           width: 2,
         ),
         shape: RoundedRectangleBorder(

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/product_service.dart';
-import 'category_provider.dart'; // Import for dioClientProvider
+import 'category_provider.dart';
 
 final productServiceProvider = Provider<ProductService>((ref) {
   final dioClient = ref.read(dioClientProvider);

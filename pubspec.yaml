@@ -46,6 +46,7 @@ dependencies:
   jwt_decode: ^0.3.1
   image_picker: ^1.2.1
   lucide_icons_flutter: ^3.1.8
+  qr_flutter: ^4.1.0
 
 dev_dependencies:
   flutter_test:

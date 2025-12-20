@@ -47,17 +47,18 @@ class _ProductCard extends StatefulWidget {
   State<_ProductCard> createState() => _ProductCardState();
 }
 
-class _ProductCardState extends State<_ProductCard> with TickerProviderStateMixin {
+class _ProductCardState extends State<_ProductCard>
+    with TickerProviderStateMixin {
   late AnimationController _scaleController;
   late Animation<double> _scaleAnimation;
-  
+
   final List<_BadgeAnimation> _badges = [];
   int _badgeIdCounter = 0;
 
   @override
   void initState() {
     super.initState();
-    
+
     _scaleController = AnimationController(
       duration: const Duration(milliseconds: 100),
       vsync: this,
@@ -81,10 +82,10 @@ class _ProductCardState extends State<_ProductCard> with TickerProviderStateMixi
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-    
+
     final id = _badgeIdCounter++;
     final badge = _BadgeAnimation(id: id, controller: controller);
-    
+
     controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         if (mounted) {
@@ -95,23 +96,23 @@ class _ProductCardState extends State<_ProductCard> with TickerProviderStateMixi
         }
       }
     });
-    
+
     setState(() => _badges.add(badge));
     controller.forward();
   }
 
   void _onTap() {
     final price = widget.product['price'];
-    
+
     _scaleController.forward().then((_) => _scaleController.reverse());
 
     widget.ref.read(cartProvider.notifier).addCartItem(
-      CartState(
-        product: widget.product,
-        quantity: 1,
-        totalPrice: double.tryParse(price) ?? 0.0,
-      ),
-    );
+          CartState(
+            product: widget.product,
+            quantity: 1,
+            totalPrice: double.tryParse(price) ?? 0.0,
+          ),
+        );
 
     _spawnBadge();
   }
@@ -169,7 +170,9 @@ class _ProductCardState extends State<_ProductCard> with TickerProviderStateMixi
                       width: double.infinity,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
-                        color: imageUrl != null ? Colors.transparent : Colors.grey.shade200,
+                        color: imageUrl != null
+                            ? Colors.transparent
+                            : Colors.grey.shade200,
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
@@ -205,7 +208,8 @@ class _ProductCardState extends State<_ProductCard> with TickerProviderStateMixi
                     ),
                   ),
                   const SizedBox(height: 4),
-                  widget.product['description'] != null && widget.product['description'].isNotEmpty
+                  widget.product['description'] != null &&
+                          widget.product['description'].isNotEmpty
                       ? Text(
                           widget.product['description'],
                           maxLines: 1,
@@ -230,51 +234,53 @@ class _ProductCardState extends State<_ProductCard> with TickerProviderStateMixi
             ),
           ),
           ..._badges.map((badge) => Positioned(
-            top: 0,
-            bottom: 100,
-            left: 0,
-            right: 0,
-            child: AnimatedBuilder(
-              animation: badge.controller,
-              builder: (context, child) {
-                final progress = badge.controller.value;
-                final opacity = progress < 0.6 ? 1.0 : 1.0 - ((progress - 0.6) / 0.4);
-                final yOffset = -70 * progress;
-                
-                return Transform.translate(
-                  offset: Offset(0, yOffset),
-                  child: Opacity(
-                    opacity: opacity,
-                    child: child,
-                  ),
-                );
-              },
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade500,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.green.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+                top: 0,
+                bottom: 100,
+                left: 0,
+                right: 0,
+                child: AnimatedBuilder(
+                  animation: badge.controller,
+                  builder: (context, child) {
+                    final progress = badge.controller.value;
+                    final opacity =
+                        progress < 0.6 ? 1.0 : 1.0 - ((progress - 0.6) / 0.4);
+                    final yOffset = -70 * progress;
+
+                    return Transform.translate(
+                      offset: Offset(0, yOffset),
+                      child: Opacity(
+                        opacity: opacity,
+                        child: child,
                       ),
-                    ],
-                  ),
-                  child: const Text(
-                    '+1',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                    );
+                  },
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade500,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.green.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Text(
+                        '+1',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          )),
+              )),
         ],
       ),
     );
@@ -284,6 +290,6 @@ class _ProductCardState extends State<_ProductCard> with TickerProviderStateMixi
 class _BadgeAnimation {
   final int id;
   final AnimationController controller;
-  
+
   _BadgeAnimation({required this.id, required this.controller});
 }
