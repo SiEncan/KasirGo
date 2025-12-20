@@ -4,11 +4,13 @@ class CartState {
   final Map<String, dynamic> product;
   final int quantity;
   final double totalPrice;
+  final String? notes;
 
   CartState({
     required this.product,
     required this.quantity,
     required this.totalPrice,
+    this.notes,
   });
 }
 
@@ -28,6 +30,7 @@ class CartNotifier extends StateNotifier<List<CartState>> {
             product: cartItem.product,
             quantity: cartItem.quantity + item.quantity,
             totalPrice: totalPrice,
+            notes: cartItem.notes
           );
         }
         return cartItem;
@@ -45,6 +48,7 @@ class CartNotifier extends StateNotifier<List<CartState>> {
           product: cartItem.product,
           quantity: cartItem.quantity + 1,
           totalPrice: totalPrice,
+          notes: cartItem.notes
         );
       }
       return cartItem;
@@ -64,11 +68,26 @@ class CartNotifier extends StateNotifier<List<CartState>> {
           product: cartItem.product,
           quantity: cartItem.quantity - 1,
           totalPrice: totalPrice,
+          notes: cartItem.notes
         );
       }
       return cartItem;
     }).toList();
   }
+
+  void updateNotes(CartState item, String? notes) {
+  state = state.map((cartItem) {
+    if (cartItem.product['id'] == item.product['id']) {
+      return CartState(
+        product: cartItem.product,
+        quantity: cartItem.quantity,
+        totalPrice: cartItem.totalPrice,
+        notes: notes,
+      );
+    }
+    return cartItem;
+  }).toList();
+}
 
   double getTotalCartPrice() {
     return state.fold(0.0, (sum, item) => sum + item.totalPrice);

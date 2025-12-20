@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir_go/providers/cart_provider.dart';
+import 'package:kasir_go/screen/checkout_screen.dart';
 import 'package:kasir_go/utils/currency_helper.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -21,7 +22,8 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
   @override
   void initState() {
     super.initState();
-    _trackedIds = ref.read(cartProvider).map((e) => e.product['id'].toString()).toList();
+    _trackedIds =
+        ref.read(cartProvider).map((e) => e.product['id'].toString()).toList();
   }
 
   void _onCartChanged(List<CartState>? previous, List<CartState> next) {
@@ -68,7 +70,8 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
     for (final id in removedIds) {
       final index = _trackedIds.indexOf(id);
       if (index != -1) {
-        final removedItem = previous.firstWhere((e) => e.product['id'].toString() == id);
+        final removedItem =
+            previous.firstWhere((e) => e.product['id'].toString() == id);
         _trackedIds.removeAt(index);
         _listKey.currentState?.removeItem(
           index,
@@ -83,6 +86,183 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
         );
       }
     }
+  }
+
+  void _showNotesDialog(CartState item) {
+    final controller = TextEditingController(text: item.notes ?? '');
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Container(
+          width: 400,
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Icon(LucideIcons.pencil,
+                            size: 20, color: Colors.grey.shade700),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            'Notes for ${item.product['name']}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(LucideIcons.x, color: Colors.grey.shade600),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Text Field
+              TextField(
+                controller: controller,
+                maxLines: 3,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'e.g., Extra spicy, no onion, less ice...',
+                  hintStyle: TextStyle(color: Colors.grey.shade400),
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        BorderSide(color: Colors.deepOrange.shade300, width: 2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Quick Tags
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildQuickTag('Extra spicy 🌶️', controller),
+                  _buildQuickTag('No ice', controller),
+                  _buildQuickTag('Less sugar', controller),
+                  _buildQuickTag('No onion', controller),
+                  _buildQuickTag('Extra sauce', controller),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        controller.clear();
+                        ref.read(cartProvider.notifier).updateNotes(item, null);
+                        Navigator.pop(context);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        side: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      child: Text(
+                        'Clear Notes',
+                        style: TextStyle(color: Colors.grey.shade700),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final notes = controller.text.trim();
+                        ref.read(cartProvider.notifier).updateNotes(
+                              item,
+                              notes.isEmpty ? null : notes,
+                            );
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepOrange,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Save Notes',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickTag(String text, TextEditingController controller) {
+    return InkWell(
+      onTap: () {
+        final current = controller.text;
+        if (current.isEmpty) {
+          controller.text = text;
+        } else {
+          controller.text = '$current, $text';
+        }
+        controller.selection = TextSelection.fromPosition(
+          TextPosition(offset: controller.text.length),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.grey.shade700,
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildCartItem(CartState item, Animation<double> animation) {
@@ -143,20 +323,19 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
                 ),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(
-                  item.product['name'],
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text(
+                      item.product['name'],
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     Text(
                       CurrencyHelper.formatIDR(item.totalPrice),
                       style: const TextStyle(
@@ -164,6 +343,13 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
+                  ],
+                ),
+                const Spacer(),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const SizedBox(height: 12),
                     Row(
                       children: [
                         InkWell(
@@ -174,17 +360,17 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
                               color: Colors.grey.shade200,
-                              borderRadius: BorderRadius.circular(6),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Icon(Icons.remove, size: 18),
+                            child: const Icon(Icons.remove, size: 16),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                         Text(
                           item.quantity.toString(),
-                          style: const TextStyle(fontSize: 16),
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                         InkWell(
                           onTap: () {
                             ref.read(cartProvider.notifier).increaseQuantity(item);
@@ -193,17 +379,39 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
                               color: Colors.grey.shade200,
-                              borderRadius: BorderRadius.circular(6),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Icon(Icons.add, size: 18),
+                            child: const Icon(Icons.add, size: 16),
                           ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 16),
+                    InkWell(
+                      onTap: () => _showNotesDialog(item),
+                      borderRadius: BorderRadius.circular(4),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(LucideIcons.pencilLine, size: 13, color: Colors.grey.shade500),
+                            const SizedBox(width: 4),
+                            Text(
+                              item.notes != null && item.notes!.isNotEmpty ? 'Edit' : 'Notes',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ],
-            ),
+            )
           ),
         ],
       ),
@@ -236,39 +444,43 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.all(Radius.circular(8)),
-                    border: Border.all(
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.all(6),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    side: BorderSide(
                       color: Colors.grey.shade400,
                       width: 1.5,
                     ),
                   ),
-                  child: InkWell(
-                    onTap: () {
-                      ref.read(cartProvider.notifier).clearCart();
-                    },
-                    child: const Row(
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 4),
-                          child: Icon(
-                            Iconsax.refresh,
-                            size: 16,
+                  onPressed: () {
+                    ref.read(cartProvider.notifier).clearCart();
+                  },
+                  child: Row(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Icon(
+                          Iconsax.refresh,
+                          size: 16,
+                          color: Colors.grey[800]
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Text(
+                          'Reset Order',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey[800],
                           ),
                         ),
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 4),
-                          child: Text(
-                            'Reset Order',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -384,12 +596,22 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepOrange,
+                  disabledBackgroundColor: Colors.grey.shade300,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                onPressed: () {},
+                onPressed: () {
+                  if (cartItems.isNotEmpty) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CheckoutScreen(),
+                      ),
+                    );
+                  }
+                },
                 child: const Text(
                   "Place Order",
                   style: TextStyle(
