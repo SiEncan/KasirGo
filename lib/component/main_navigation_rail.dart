@@ -12,11 +12,11 @@ class MainNavigationRail extends StatelessWidget {
     required this.onMenuSelected,
   });
 
-    int _getSelectedIndex() {
+  int _getSelectedIndex() {
     switch (selectedMenu) {
       case 'home':
         return 0;
-      case 'category':
+      case 'transactionhistory':
         return 1;
       case 'products':
         return 2;
@@ -34,7 +34,7 @@ class MainNavigationRail extends StatelessWidget {
       case 0:
         return 'home';
       case 1:
-        return 'category';
+        return 'transactionhistory';
       case 2:
         return 'products';
       case 3:
@@ -94,7 +94,8 @@ class MainNavigationRail extends StatelessWidget {
         ),
         destinations: [
           _buildDestination(Iconsax.home5, 'Home', 'home'),
-          _buildDestination(Iconsax.category5, 'Category', 'category'),
+          _buildDestination(
+              Iconsax.category5, 'Transaction History', 'transactionhistory'),
           _buildDestination(Icons.fastfood, 'Products', 'products'),
           _buildDestination(Iconsax.profile_circle5, 'Profile', 'profile'),
           _buildDestination(Icons.settings, 'Settings', 'settings'),
@@ -103,7 +104,8 @@ class MainNavigationRail extends StatelessWidget {
     );
   }
 
-  NavigationRailDestination _buildDestination(IconData icon, String label, String menu) {
+  NavigationRailDestination _buildDestination(
+      IconData icon, String label, String menu) {
     return NavigationRailDestination(
       padding: const EdgeInsets.symmetric(vertical: 8),
       icon: ClipRRect(

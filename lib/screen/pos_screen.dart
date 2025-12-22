@@ -3,6 +3,7 @@ import 'package:kasir_go/component/main_navigation_rail.dart';
 import 'package:kasir_go/screen/products/products_screen.dart';
 import 'package:kasir_go/screen/profile_screen.dart';
 import 'package:kasir_go/screen/home/home_screen.dart';
+import 'package:kasir_go/screen/transaction_history/transaction_history_screen.dart';
 
 class POSScreen extends StatefulWidget {
   const POSScreen({super.key});
@@ -39,8 +40,8 @@ class _POSScreenState extends State<POSScreen> {
     switch (selectedMenu) {
       case 'home':
         return const HomeScreen();
-      case 'category':
-        return _buildCategoryScreen();
+      case 'transactionhistory':
+        return const TransactionHistoryScreen();
       case 'products':
         return const ManageProductsScreen();
       case 'profile':
