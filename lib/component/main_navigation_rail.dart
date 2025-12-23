@@ -70,13 +70,21 @@ class MainNavigationRail extends StatelessWidget {
   Widget _buildCustomDestination(
       IconData icon, String label, String menu, bool isSelected) {
     return InkWell(
-      onTap: () => onMenuSelected(menu),
-      borderRadius: BorderRadius.circular(12),
-      child: Icon(
-        icon,
-        size: 42,
-        color: isSelected ? Colors.deepOrange.shade400 : Colors.grey[400],
-      ),
-    );
+        onTap: () => onMenuSelected(menu),
+        borderRadius: BorderRadius.circular(12),
+        child: TweenAnimationBuilder<Color?>(
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeInOut,
+          tween: ColorTween(
+            end: isSelected ? Colors.deepOrange.shade400 : Colors.grey[400],
+          ),
+          builder: (context, color, _) {
+            return Icon(
+              icon,
+              size: 42,
+              color: color,
+            );
+          },
+        ));
   }
 }
