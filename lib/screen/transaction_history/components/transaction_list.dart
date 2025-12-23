@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
 import 'package:kasir_go/providers/transaction_provider.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class TransactionList extends ConsumerStatefulWidget {
   const TransactionList({super.key});
@@ -124,35 +125,54 @@ class _TransactionListState extends ConsumerState<TransactionList> {
             }
           }
 
+          final selectedTransaction = state.selectedTransaction;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (showHeader) ...[
-                if (index != 0)
-                  Divider(
-                    color: Colors.grey.shade200,
-                    thickness: 2,
-                    height: 5,
-                  ),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-                  child: Text(
-                    formattedDate,
-                    textAlign: TextAlign.left,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.orange.shade700,
-                    ),
+              if (showHeader)
+                Padding(
+                  padding: const EdgeInsets.only(
+                      left: 12.0, right: 12.0, top: 16.0, bottom: 8.0),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.orange.shade100),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Iconsax.calendar_1,
+                              size: 14,
+                              color: Colors.orange.shade800,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              formattedDate,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.orange.shade800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Divider(
+                          color: Colors.orange.shade600,
+                          thickness: 1,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Divider(
-                  color: Colors.grey.shade200,
-                  thickness: 2,
-                  height: 5,
-                ),
-              ],
               InkWell(
                 onTap: () {
                   if (transaction['id'] != null) {
@@ -161,39 +181,133 @@ class _TransactionListState extends ConsumerState<TransactionList> {
                         .selectTransaction(transaction['id']);
                   }
                 },
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeInOut,
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: selectedTransaction?['id'] == transaction['id']
+                        ? Colors.orange.shade50
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: selectedTransaction?['id'] == transaction['id']
+                        ? Border.all(color: Colors.orange.shade500, width: 1.5)
+                        : Border.all(color: Colors.transparent, width: 1.5),
+                    boxShadow: selectedTransaction?['id'] == transaction['id']
+                        ? [
+                            BoxShadow(
+                              color: Colors.orange.withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            )
+                          ]
+                        : null,
+                  ),
+                  padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      Icon(
-                        Iconsax.wallet,
-                        color: Colors.grey.shade800,
-                        size: 32,
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: selectedTransaction?['id'] == transaction['id']
+                              ? Colors.orange.shade100
+                              : Colors.grey.shade100,
+                          shape: BoxShape.circle,
+                        ),
+                        child: transaction['payment_method'] == 'cash'
+                            ? Icon(
+                                LucideIcons.wallet,
+                                color: selectedTransaction?['id'] ==
+                                        transaction['id']
+                                    ? Colors.orange.shade700
+                                    : Colors.grey.shade500,
+                                size: 24,
+                              )
+                            : transaction['payment_method'] == 'qris'
+                                ? Icon(
+                                    LucideIcons.qrCode,
+                                    color: selectedTransaction?['id'] ==
+                                            transaction['id']
+                                        ? Colors.orange.shade700
+                                        : Colors.grey.shade500,
+                                    size: 24,
+                                  )
+                                : Icon(
+                                    Iconsax.card,
+                                    color: selectedTransaction?['id'] ==
+                                            transaction['id']
+                                        ? Colors.orange.shade700
+                                        : Colors.grey.shade600,
+                                    size: 24,
+                                  ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 16),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            formattedAmount,
-                            textAlign: TextAlign.left,
-                            style: const TextStyle(
+                          AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 200),
+                            style: TextStyle(
                               fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: selectedTransaction?['id'] ==
+                                      transaction['id']
+                                  ? Colors.orange.shade900
+                                  : Colors.black87,
+                            ),
+                            child: Text(
+                              formattedAmount,
                             ),
                           ),
-                          Text(
-                            formattedTime,
-                            textAlign: TextAlign.left,
+                          const SizedBox(height: 4),
+                          AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 200),
                             style: TextStyle(
-                              color: Colors.grey.shade600,
+                              fontSize: 12,
+                              color: selectedTransaction?['id'] ==
+                                      transaction['id']
+                                  ? Colors.orange.shade700
+                                  : Colors.grey.shade500,
+                            ),
+                            child: Text(
+                              formattedTime,
                             ),
                           ),
                         ],
                       ),
                       const Spacer(),
-                      Text(
-                        "#${transaction['transaction_number'] ?? '-'}",
-                        style: TextStyle(color: Colors.grey.shade600),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: selectedTransaction?['id'] == transaction['id']
+                              ? Colors.white
+                              : Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color:
+                                selectedTransaction?['id'] == transaction['id']
+                                    ? Colors.orange.shade200
+                                    : Colors.grey.shade200,
+                          ),
+                        ),
+                        child: AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 200),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color:
+                                selectedTransaction?['id'] == transaction['id']
+                                    ? Colors.orange.shade700
+                                    : Colors.grey.shade600,
+                          ),
+                          child: Text(
+                            "#${transaction['transaction_number'] ?? '-'}",
+                          ),
+                        ),
                       )
                     ],
                   ),
@@ -201,7 +315,7 @@ class _TransactionListState extends ConsumerState<TransactionList> {
               ),
               if (showDivider)
                 Divider(
-                  color: Colors.grey.shade200,
+                  color: Colors.grey.shade300,
                   thickness: 1,
                   height: 1,
                 ),
