@@ -303,7 +303,8 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
-                        value: _productCategory.isEmpty ? '' : _productCategory,
+                        initialValue:
+                            _productCategory.isEmpty ? '' : _productCategory,
                         decoration:
                             _inputDecoration("Category", Icons.category),
                         items: [

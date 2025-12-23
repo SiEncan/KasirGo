@@ -84,9 +84,6 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
       final result = await _service.getPaymentStatus(paymentId);
       final statusData = result['data'];
 
-      print(
-          "PAYMENT POLLING STATUS: ${statusData['status']} for ID: $paymentId");
-
       if (statusData['status'] == 'success') {
         state = state.copyWith(
           isPaymentSuccess: true,
@@ -102,7 +99,7 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
         stopPolling();
       }
     } catch (e) {
-      print("Polling error: $e");
+      state = state.copyWith(errorMessage: "Polling error: $e");
     }
   }
 

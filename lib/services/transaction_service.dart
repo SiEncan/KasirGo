@@ -9,7 +9,6 @@ class TransactionService {
 
   Future<Map<String, dynamic>> createTransaction(
       Map<String, dynamic> transactionData) async {
-    print(transactionData);
     try {
       final response = await dioClient.dio.post(
         '/transaction/create/',

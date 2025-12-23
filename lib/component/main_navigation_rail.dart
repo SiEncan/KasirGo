@@ -12,116 +12,71 @@ class MainNavigationRail extends StatelessWidget {
     required this.onMenuSelected,
   });
 
-  int _getSelectedIndex() {
-    switch (selectedMenu) {
-      case 'home':
-        return 0;
-      case 'transactionhistory':
-        return 1;
-      case 'products':
-        return 2;
-      case 'profile':
-        return 3;
-      case 'settings':
-        return 4;
-      default:
-        return 0;
-    }
-  }
-
-  String _getMenuByIndex(int index) {
-    switch (index) {
-      case 0:
-        return 'home';
-      case 1:
-        return 'transactionhistory';
-      case 2:
-        return 'products';
-      case 3:
-        return 'profile';
-      case 4:
-        return 'settings';
-      default:
-        return 'home';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: 80, // Set fixed width for custom rail
       decoration: BoxDecoration(
+        color: Colors.white,
         border: Border(
           right: BorderSide(color: Colors.grey[300]!),
         ),
       ),
-      child: NavigationRail(
-        selectedIndex: _getSelectedIndex(),
-        onDestinationSelected: (index) {
-          onMenuSelected(_getMenuByIndex(index));
-        },
-        backgroundColor: Colors.white,
-        elevation: 2,
-        selectedIconTheme: IconThemeData(
-          color: Colors.deepOrange.shade400,
-          opacity: 1,
-        ),
-        unselectedIconTheme: IconThemeData(
-          color: Colors.grey[400],
-          opacity: 1,
-        ),
-        unselectedLabelTextStyle: const TextStyle(
-          color: Colors.white,
-        ),
-        useIndicator: false,
-        leading: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SvgPicture.asset(
-                'assets/logo/logo.svg',
-                width: 42,
-                height: 42,
-              ),
-              const SizedBox(height: 24),
-              Container(
-                height: 1,
-                width: 90,
-                color: Colors.grey[400],
-              ),
-            ],
+      child: Column(
+        children: [
+          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 13),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SvgPicture.asset(
+                  'assets/logo/logo.svg',
+                  width: 42,
+                  height: 42,
+                ),
+              ],
+            ),
           ),
-        ),
-        destinations: [
-          _buildDestination(Iconsax.home5, 'Home', 'home'),
-          _buildDestination(
-              Iconsax.category5, 'Transaction History', 'transactionhistory'),
-          _buildDestination(Icons.fastfood, 'Products', 'products'),
-          _buildDestination(Iconsax.profile_circle5, 'Profile', 'profile'),
-          _buildDestination(Icons.settings, 'Settings', 'settings'),
+          Divider(
+            color: Colors.grey[300],
+          ),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildCustomDestination(
+                    Iconsax.home5, 'Home', 'home', selectedMenu == 'home'),
+                _buildCustomDestination(Icons.fastfood, 'Products', 'products',
+                    selectedMenu == 'products'),
+                _buildCustomDestination(
+                    Iconsax.category5,
+                    'Transaction History',
+                    'transactionhistory',
+                    selectedMenu == 'transactionhistory'),
+                _buildCustomDestination(Iconsax.profile_circle5, 'Profile',
+                    'profile', selectedMenu == 'profile'),
+                _buildCustomDestination(Icons.settings, 'Settings', 'settings',
+                    selectedMenu == 'settings'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
         ],
       ),
     );
   }
 
-  NavigationRailDestination _buildDestination(
-      IconData icon, String label, String menu) {
-    return NavigationRailDestination(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      icon: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () {
-            onMenuSelected(menu);
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Icon(icon, size: 36),
-          ),
-        ),
+  Widget _buildCustomDestination(
+      IconData icon, String label, String menu, bool isSelected) {
+    return InkWell(
+      onTap: () => onMenuSelected(menu),
+      borderRadius: BorderRadius.circular(12),
+      child: Icon(
+        icon,
+        size: 42,
+        color: isSelected ? Colors.deepOrange.shade400 : Colors.grey[400],
       ),
-      label: Text(label),
     );
   }
 }

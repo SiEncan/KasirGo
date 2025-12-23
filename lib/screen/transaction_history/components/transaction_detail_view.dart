@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:kasir_go/providers/transaction_provider.dart';
 import 'package:kasir_go/screen/transaction_history/components/receipt_widgets.dart';
+import 'package:kasir_go/utils/currency_helper.dart';
 
 class TransactionDetailView extends ConsumerWidget {
   const TransactionDetailView({super.key});
@@ -354,7 +355,7 @@ class TransactionDetailView extends ConsumerWidget {
               Row(
                 children: [
                   Text(
-                    '$quantity x ${NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(price)}',
+                    '$quantity x ${CurrencyHelper.formatIDR(price)}',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w300,
@@ -363,9 +364,7 @@ class TransactionDetailView extends ConsumerWidget {
                   ),
                   const Spacer(),
                   Text(
-                    NumberFormat.currency(
-                            locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0)
-                        .format(itemSubtotal),
+                    CurrencyHelper.formatIDR(itemSubtotal),
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
@@ -397,10 +396,7 @@ class TransactionDetailView extends ConsumerWidget {
             ),
             const Spacer(),
             Text(
-              NumberFormat.currency(
-                      locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0)
-                  .format(
-                      subtotal), // Assuming subtotal logic if needed, or just use total for now
+              CurrencyHelper.formatIDR(subtotal),
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w400,
@@ -423,7 +419,7 @@ class TransactionDetailView extends ConsumerWidget {
               ),
               const Spacer(),
               Text(
-                '- ${NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(discount)}',
+                '- ${CurrencyHelper.formatIDR(discount)}',
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w400,
@@ -446,9 +442,7 @@ class TransactionDetailView extends ConsumerWidget {
             ),
             const Spacer(),
             Text(
-              NumberFormat.currency(
-                      locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0)
-                  .format(tax),
+              CurrencyHelper.formatIDR(tax),
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w400,
@@ -471,9 +465,7 @@ class TransactionDetailView extends ConsumerWidget {
               ),
               const Spacer(),
               Text(
-                NumberFormat.currency(
-                        locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0)
-                    .format(takeAwayCharge),
+                CurrencyHelper.formatIDR(takeAwayCharge),
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w400,
@@ -500,9 +492,7 @@ class TransactionDetailView extends ConsumerWidget {
             ),
             const Spacer(),
             Text(
-              NumberFormat.currency(
-                      locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0)
-                  .format(totalAmount),
+              CurrencyHelper.formatIDR(totalAmount),
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -524,9 +514,7 @@ class TransactionDetailView extends ConsumerWidget {
             ),
             const Spacer(),
             Text(
-              NumberFormat.currency(
-                      locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0)
-                  .format(paidAmount),
+              CurrencyHelper.formatIDR(paidAmount),
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w400,
@@ -548,9 +536,7 @@ class TransactionDetailView extends ConsumerWidget {
             ),
             const Spacer(),
             Text(
-              NumberFormat.currency(
-                      locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0)
-                  .format(changeAmount),
+              CurrencyHelper.formatIDR(changeAmount),
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w400,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
 import 'package:kasir_go/providers/transaction_provider.dart';
+import 'package:kasir_go/utils/currency_helper.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class TransactionList extends ConsumerStatefulWidget {
@@ -75,9 +76,7 @@ class _TransactionListState extends ConsumerState<TransactionList> {
 
           final transaction = state.transactions[index];
           final amount = double.parse(transaction['total'] ?? 0);
-          final formattedAmount = NumberFormat.currency(
-                  locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0)
-              .format(amount);
+          final formattedAmount = CurrencyHelper.formatIDR(amount);
           final dateString = transaction['created_at'] ?? '';
           DateTime? date;
           try {

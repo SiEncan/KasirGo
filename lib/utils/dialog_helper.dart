@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 enum DialogType { success, error, warning, info }
 
 /// Helper function untuk menampilkan styled dialog
-/// 
+///
 /// Usage:
 /// ```dart
 /// showStyledDialog(
@@ -66,7 +66,7 @@ void showStyledDialog(
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -88,7 +88,7 @@ void showStyledDialog(
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: gradientColors[0].withOpacity(0.3),
+                      color: gradientColors[0].withValues(alpha: 0.3),
                       blurRadius: 15,
                       offset: const Offset(0, 5),
                     ),
@@ -210,7 +210,7 @@ Future<bool?> showConfirmDialog(
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -231,7 +231,7 @@ Future<bool?> showConfirmDialog(
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: gradientColors[0].withOpacity(0.3),
+                      color: gradientColors[0].withValues(alpha: 0.3),
                       blurRadius: 15,
                       offset: const Offset(0, 5),
                     ),
@@ -320,19 +320,23 @@ Future<bool?> showConfirmDialog(
 
 /// Shortcut functions untuk kemudahan penggunaan
 void showSuccessDialog(BuildContext context, String message, {String? title}) {
-  showStyledDialog(context, message: message, type: DialogType.success, title: title);
+  showStyledDialog(context,
+      message: message, type: DialogType.success, title: title);
 }
 
 void showErrorDialog(BuildContext context, String message, {String? title}) {
-  showStyledDialog(context, message: message, type: DialogType.error, title: title);
+  showStyledDialog(context,
+      message: message, type: DialogType.error, title: title);
 }
 
 void showWarningDialog(BuildContext context, String message, {String? title}) {
-  showStyledDialog(context, message: message, type: DialogType.warning, title: title);
+  showStyledDialog(context,
+      message: message, type: DialogType.warning, title: title);
 }
 
 void showInfoDialog(BuildContext context, String message, {String? title}) {
-  showStyledDialog(context, message: message, type: DialogType.info, title: title);
+  showStyledDialog(context,
+      message: message, type: DialogType.info, title: title);
 }
 
 /// Shortcut for delete confirmation

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 enum SnackBarType { success, error, warning, info }
 
 /// Helper function untuk menampilkan styled snackbar
-/// 
+///
 /// Usage:
 /// ```dart
 /// showStyledSnackBar(
@@ -54,7 +54,7 @@ void showStyledSnackBar(
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -103,18 +103,24 @@ void showStyledSnackBar(
 }
 
 /// Shortcut functions untuk kemudahan penggunaan
-void showSuccessSnackBar(BuildContext context, String message, {String? title}) {
-  showStyledSnackBar(context, message: message, type: SnackBarType.success, title: title);
+void showSuccessSnackBar(BuildContext context, String message,
+    {String? title}) {
+  showStyledSnackBar(context,
+      message: message, type: SnackBarType.success, title: title);
 }
 
 void showErrorSnackBar(BuildContext context, String message, {String? title}) {
-  showStyledSnackBar(context, message: message, type: SnackBarType.error, title: title);
+  showStyledSnackBar(context,
+      message: message, type: SnackBarType.error, title: title);
 }
 
-void showWarningSnackBar(BuildContext context, String message, {String? title}) {
-  showStyledSnackBar(context, message: message, type: SnackBarType.warning, title: title);
+void showWarningSnackBar(BuildContext context, String message,
+    {String? title}) {
+  showStyledSnackBar(context,
+      message: message, type: SnackBarType.warning, title: title);
 }
 
 void showInfoSnackBar(BuildContext context, String message, {String? title}) {
-  showStyledSnackBar(context, message: message, type: SnackBarType.info, title: title);
+  showStyledSnackBar(context,
+      message: message, type: SnackBarType.info, title: title);
 }
