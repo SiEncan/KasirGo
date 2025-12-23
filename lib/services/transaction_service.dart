@@ -20,6 +20,33 @@ class TransactionService {
     }
   }
 
+  Future<Map<String, dynamic>> getTransactions(
+      {int page = 1, int pageSize = 10}) async {
+    try {
+      final response = await dioClient.dio.get(
+        '/transaction/',
+        queryParameters: {
+          'page': page,
+          'page_size': pageSize,
+        },
+      );
+      return response.data;
+    } on DioException catch (e) {
+      throw _handleError(e, 'Failed to get transactions');
+    }
+  }
+
+  Future<Map<String, dynamic>> getTransaction(int transactionId) async {
+    try {
+      final response = await dioClient.dio.get(
+        '/transaction/$transactionId',
+      );
+      return response.data;
+    } on DioException catch (e) {
+      throw _handleError(e, 'Failed to get transaction');
+    }
+  }
+
   /// Extract AppException from DioException or create fallback
   AppException _handleError(DioException e, String fallback) {
     if (e.error is AppException) return e.error as AppException;

@@ -9,14 +9,14 @@ final tokenStorageProvider = Provider((ref) => TokenStorage());
 final authServiceProvider = Provider((ref) {
   final tokenStorage = ref.read(tokenStorageProvider);
   final authService = AuthService(tokenStorage: tokenStorage);
-  
+
   // Inject DioClient setelah AuthService created (avoid circular dependency)
   final dioClient = DioClient(
     tokenStorage: tokenStorage,
     authService: authService,
   );
   authService.dioClient = dioClient;
-  
+
   return authService;
 });
 
@@ -27,16 +27,15 @@ class AuthState {
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  final AuthService authService;
+  final AuthService _service;
   final TokenStorage tokenStorage;
 
-  AuthNotifier(this.authService, this.tokenStorage)
-      : super(AuthState());
+  AuthNotifier(this._service, this.tokenStorage) : super(AuthState());
 
   Future<void> login(String username, String password) async {
     state = AuthState(isLoading: true);
     try {
-      final result = await authService.login(username, password);
+      final result = await _service.login(username, password);
       await tokenStorage.saveTokens(result['access'], result['refresh']);
     } finally {
       state = AuthState(isLoading: false);
@@ -57,10 +56,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }) async {
     state = AuthState(isLoading: true);
     try {
-      final userId = await authService.getUserId();
+      final userId = await _service.getUserId();
       if (userId == null) throw AppException.sessionExpired();
 
-      await authService.updateProfile(
+      await _service.updateProfile(
         userId: userId,
         username: username,
         firstName: firstName,
@@ -79,10 +78,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }) async {
     state = AuthState(isLoading: true);
     try {
-      final userId = await authService.getUserId();
+      final userId = await _service.getUserId();
       if (userId == null) throw AppException.sessionExpired();
 
-      await authService.changePassword(
+      await _service.changePassword(
         userId: userId,
         oldPassword: oldPassword,
         newPassword: newPassword,
@@ -93,15 +92,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<Map<String, dynamic>> getProfile() async {
-    final userId = await authService.getUserId();
+    final userId = await _service.getUserId();
     if (userId == null) throw AppException.sessionExpired();
 
-    return await authService.getProfile(userId);
+    return await _service.getProfile(userId);
   }
 }
 
-final authProvider =
-    StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(
     ref.read(authServiceProvider),
     ref.read(tokenStorageProvider),

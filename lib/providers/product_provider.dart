@@ -25,19 +25,19 @@ class ProductState {
 }
 
 class ProductNotifier extends StateNotifier<ProductState> {
-  final ProductService productService;
+  final ProductService _service;
 
-  ProductNotifier(this.productService) : super(ProductState());
+  ProductNotifier(this._service) : super(ProductState());
 
   Future<void> fetchAllProducts() async {
-    final data = await productService.getAllProduct();
+    final data = await _service.getAllProduct();
     state = state.copyWith(products: data);
   }
 
   Future<void> addProduct(Map<String, dynamic> payload) async {
     state = state.copyWith(isLoading: true);
     try {
-      await productService.createProduct(payload);
+      await _service.createProduct(payload);
       await fetchAllProducts();
     } finally {
       state = state.copyWith(isLoading: false);
@@ -47,7 +47,7 @@ class ProductNotifier extends StateNotifier<ProductState> {
   Future<void> editProduct(int productId, Map<String, dynamic> payload) async {
     state = state.copyWith(isLoading: true);
     try {
-      await productService.editProduct(productId, payload);
+      await _service.editProduct(productId, payload);
       await fetchAllProducts();
     } finally {
       state = state.copyWith(isLoading: false);
@@ -57,7 +57,7 @@ class ProductNotifier extends StateNotifier<ProductState> {
   Future<void> deleteProduct(int productId) async {
     state = state.copyWith(isLoading: true);
     try {
-      await productService.deleteProduct(productId);
+      await _service.deleteProduct(productId);
       await fetchAllProducts();
     } finally {
       state = state.copyWith(isLoading: false);

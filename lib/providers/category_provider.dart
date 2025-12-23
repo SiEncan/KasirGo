@@ -37,30 +37,31 @@ class CategoryState {
 }
 
 class CategoryNotifier extends StateNotifier<CategoryState> {
-  final CategoryService service;
+  final CategoryService _service;
   final Ref ref;
 
-  CategoryNotifier(this.service, this.ref) : super(CategoryState());
+  CategoryNotifier(this._service, this.ref) : super(CategoryState());
 
   Future<void> fetchAllCategories() async {
-    final data = await service.getAllCategories();
+    final data = await _service.getAllCategories();
     state = state.copyWith(categories: data);
   }
 
   Future<void> addCategory(Map<String, dynamic> payload) async {
     state = state.copyWith(isLoading: true);
     try {
-      await service.createCategory(payload);
+      await _service.createCategory(payload);
       await fetchAllCategories();
     } finally {
       state = state.copyWith(isLoading: false);
     }
   }
 
-  Future<void> editCategory(int categoryId, Map<String, dynamic> payload) async {
+  Future<void> editCategory(
+      int categoryId, Map<String, dynamic> payload) async {
     state = state.copyWith(isLoading: true);
     try {
-      await service.editCategory(categoryId, payload);
+      await _service.editCategory(categoryId, payload);
       await fetchAllCategories();
     } finally {
       state = state.copyWith(isLoading: false);
@@ -70,7 +71,7 @@ class CategoryNotifier extends StateNotifier<CategoryState> {
   Future<void> deleteCategory(int categoryId) async {
     state = state.copyWith(isLoading: true);
     try {
-      await service.deleteCategory(categoryId);
+      await _service.deleteCategory(categoryId);
       await fetchAllCategories();
       await ref.read(productProvider.notifier).fetchAllProducts();
     } finally {

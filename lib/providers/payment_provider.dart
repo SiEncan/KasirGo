@@ -37,15 +37,15 @@ class PaymentState {
 }
 
 class PaymentNotifier extends StateNotifier<PaymentState> {
-  final PaymentService _paymentService;
+  final PaymentService _service;
   Timer? _pollingTimer;
 
-  PaymentNotifier(this._paymentService) : super(PaymentState());
+  PaymentNotifier(this._service) : super(PaymentState());
 
   Future<bool> createPayment(Map<String, dynamic> paymentData) async {
     state = state.copyWith(isLoading: true, isPaymentSuccess: false);
     try {
-      final result = await _paymentService.createPayment(paymentData);
+      final result = await _service.createPayment(paymentData);
       state = state.copyWith(
         isLoading: false,
         currentPayment: result['data'],
@@ -81,7 +81,7 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
 
   Future<void> checkPaymentStatus(int paymentId) async {
     try {
-      final result = await _paymentService.getPaymentStatus(paymentId);
+      final result = await _service.getPaymentStatus(paymentId);
       final statusData = result['data'];
 
       print(
