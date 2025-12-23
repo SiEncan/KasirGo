@@ -22,14 +22,19 @@ class TransactionService {
   }
 
   Future<Map<String, dynamic>> getTransactions(
-      {int page = 1, int pageSize = 10}) async {
+      {int page = 1, int pageSize = 10, String? search}) async {
     try {
+      final Map<String, dynamic> queryParams = {
+        'page': page,
+        'page_size': pageSize,
+      };
+      if (search != null && search.isNotEmpty) {
+        queryParams['search'] = search;
+      }
+
       final response = await dioClient.dio.get(
         '/transaction/',
-        queryParameters: {
-          'page': page,
-          'page_size': pageSize,
-        },
+        queryParameters: queryParams,
       );
       return response.data;
     } on DioException catch (e) {

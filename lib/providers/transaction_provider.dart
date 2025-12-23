@@ -23,6 +23,9 @@ class TransactionState {
   final Map<String, dynamic>? selectedTransaction;
   final bool isLoadingDetail;
 
+  // Search State
+  final String searchQuery;
+
   TransactionState({
     this.isLoading = false,
     this.currentTransaction,
@@ -34,6 +37,7 @@ class TransactionState {
     this.isLoadingMore = false,
     this.selectedTransaction,
     this.isLoadingDetail = false,
+    this.searchQuery = '',
   });
 
   TransactionState copyWith({
@@ -47,6 +51,7 @@ class TransactionState {
     bool? isLoadingMore,
     Map<String, dynamic>? selectedTransaction,
     bool? isLoadingDetail,
+    String? searchQuery,
   }) {
     return TransactionState(
       isLoading: isLoading ?? this.isLoading,
@@ -59,6 +64,7 @@ class TransactionState {
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       selectedTransaction: selectedTransaction ?? this.selectedTransaction,
       isLoadingDetail: isLoadingDetail ?? this.isLoadingDetail,
+      searchQuery: searchQuery ?? this.searchQuery,
     );
   }
 }
@@ -100,7 +106,10 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
     }
 
     try {
-      final result = await _service.getTransactions(page: state.page);
+      final result = await _service.getTransactions(
+        page: state.page,
+        search: state.searchQuery,
+      );
       final List<Map<String, dynamic>> newTransactions =
           List<Map<String, dynamic>>.from(result['data'] ?? []);
 
@@ -118,6 +127,17 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
         errorMessage: e.toString(),
       );
     }
+  }
+
+  Future<void> searchTransactions(String query) async {
+    state = state.copyWith(
+      searchQuery: query,
+      page: 1,
+      hasMore: true,
+      transactions: [],
+      isLoading: true,
+    );
+    await fetchTransactions();
   }
 
   Future<Map<String, dynamic>?> createTransaction(
