@@ -14,7 +14,8 @@ class CheckoutRightPanel extends StatelessWidget {
   final ValueChanged<String> onNotesChanged;
   final double subtotal;
   final double tax;
-  final double serviceCharge;
+  final int taxRate;
+  final double takeAwayCharge;
   final double total;
   final bool isCartEmpty;
   final VoidCallback onConfirm;
@@ -31,7 +32,8 @@ class CheckoutRightPanel extends StatelessWidget {
     required this.onNotesChanged,
     required this.subtotal,
     required this.tax,
-    required this.serviceCharge,
+    required this.taxRate,
+    required this.takeAwayCharge,
     required this.total,
     required this.isCartEmpty,
     required this.onConfirm,
@@ -247,14 +249,14 @@ class CheckoutRightPanel extends StatelessWidget {
                           ),
                           const SizedBox(height: 10),
                           SummaryRow(
-                            label: 'Tax (10%)',
+                            label: 'Tax ($taxRate%)',
                             value: CurrencyHelper.formatIDR(tax.toString()),
                           ),
                           const SizedBox(height: 10),
                           SummaryRow(
-                            label: 'Service Charge',
+                            label: 'Take Away Charge',
                             value: CurrencyHelper.formatIDR(
-                                serviceCharge.toString()),
+                                takeAwayCharge.toString()),
                           ),
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 16),

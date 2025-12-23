@@ -160,8 +160,10 @@ class _TransactionHistoryScreenState
                         final state = ref.watch(transactionProvider);
 
                         if (state.isLoading && state.transactions.isEmpty) {
-                          return const Center(
-                              child: CircularProgressIndicator());
+                          return Center(
+                              child: CircularProgressIndicator(
+                            color: Colors.orange.shade700,
+                          ));
                         }
 
                         if (state.errorMessage != null &&
@@ -187,10 +189,11 @@ class _TransactionHistoryScreenState
                                 (state.isLoadingMore ? 1 : 0),
                             itemBuilder: (context, index) {
                               if (index == state.transactions.length) {
-                                return const Center(
+                                return Center(
                                   child: Padding(
-                                    padding: EdgeInsets.all(8.0),
-                                    child: CircularProgressIndicator(),
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: CircularProgressIndicator(
+                                        color: Colors.orange.shade700),
                                   ),
                                 );
                               }
@@ -388,7 +391,8 @@ class _TransactionHistoryScreenState
     final transaction = state.selectedTransaction;
 
     if (state.isLoadingDetail) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+          child: CircularProgressIndicator(color: Colors.orange.shade700));
     }
 
     if (transaction == null) {
@@ -424,8 +428,12 @@ class _TransactionHistoryScreenState
         double.parse((transaction['paid_amount'] ?? 0).toString());
     final changeAmount =
         double.parse((transaction['change_amount'] ?? 0).toString());
+    final takeAwayCharge =
+        double.parse((transaction['takeaway_charge'] ?? 0).toString());
     final notes = transaction['notes'] ?? '';
     String orderType = transaction['order_type'] ?? '-';
+
+    final status = transaction['status'] == 'completed' ? 'Paid' : 'Unpaid';
 
     if (orderType.isNotEmpty && orderType != '-') {
       orderType = orderType
@@ -500,7 +508,7 @@ class _TransactionHistoryScreenState
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Row(
           children: [
             Text(
@@ -520,7 +528,7 @@ class _TransactionHistoryScreenState
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Row(
           children: [
             Text(
@@ -542,7 +550,7 @@ class _TransactionHistoryScreenState
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Row(
           children: [
             Text(
@@ -564,7 +572,7 @@ class _TransactionHistoryScreenState
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Row(
           children: [
             Text(
@@ -586,7 +594,7 @@ class _TransactionHistoryScreenState
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Row(
           children: [
             Text(
@@ -608,7 +616,7 @@ class _TransactionHistoryScreenState
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Row(
           children: [
             Text(
@@ -623,15 +631,19 @@ class _TransactionHistoryScreenState
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.green.shade100,
+                color: status == 'Paid'
+                    ? Colors.green.shade100
+                    : Colors.red.shade100,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
-                'Paid',
+                status,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: Colors.green.shade500,
+                  color: status == 'Paid'
+                      ? Colors.green.shade500
+                      : Colors.red.shade500,
                 ),
               ),
             ),
@@ -774,7 +786,7 @@ class _TransactionHistoryScreenState
           ],
         ),
         if (discount > 0) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Row(
             children: [
               Text(
@@ -797,11 +809,11 @@ class _TransactionHistoryScreenState
             ],
           ),
         ],
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Row(
           children: [
             Text(
-              'Pajak (11%)',
+              'Pajak (${(tax / subtotal * 100).toStringAsFixed(0)}%)',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w300,
@@ -821,6 +833,32 @@ class _TransactionHistoryScreenState
             ),
           ],
         ),
+        if (takeAwayCharge > 0) ...[
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Text(
+                'Take Away Charge',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w300,
+                  color: Colors.grey.shade900,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                NumberFormat.currency(
+                        locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0)
+                    .format(takeAwayCharge),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.black,
+                ),
+              ),
+            ],
+          ),
+        ],
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 16.0),
           child: DashedDivider(color: Colors.grey.shade700),

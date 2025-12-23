@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir_go/providers/cart_provider.dart';
 import 'package:kasir_go/providers/payment_provider.dart';
+import 'package:kasir_go/providers/setting_provider.dart';
 import 'package:kasir_go/providers/transaction_provider.dart';
 import 'package:kasir_go/screen/checkout/components/checkout_left_panel.dart';
 import 'package:kasir_go/screen/checkout/components/checkout_right_panel.dart';
 import 'package:kasir_go/screen/checkout/components/customer_name_dialog.dart';
 import 'package:kasir_go/screen/checkout/components/payment_success_dialog.dart';
+import 'package:kasir_go/screen/checkout/components/cash_payment_dialog.dart';
 import 'package:kasir_go/screen/payment_screen.dart';
+import 'package:kasir_go/utils/dialog_helper.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
@@ -33,22 +36,45 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     }
   }
 
-  void _showSuccessDialog() {
+  void _showSuccessDialog({double? total, double? paid, double? change}) {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const PaymentSuccessDialog(),
+      builder: (context) => PaymentSuccessDialog(
+        total: total,
+        paid: paid,
+        change: change,
+      ),
     );
   }
 
   Future<void> _handleConfirmPayment() async {
     final cartItems = ref.read(cartProvider);
+    final settings = ref.read(settingProvider);
     final subtotal = ref.read(cartProvider.notifier).getTotalCartPrice();
-    final tax = subtotal * 0.1;
-    final serviceCharge = cartItems.isEmpty ? 0.0 : 2000.0;
-    final total = subtotal + tax + serviceCharge;
 
-    // 1. Prepare Transaction Data
+    final tax = subtotal * (settings.taxRate / 100);
+    // Apply Take Away Charge only for Take Away orders
+    final takeAwayCharge =
+        selectedOrderType == 'Take Away' ? settings.takeAwayCharge : 0.0;
+    final total = subtotal + tax + takeAwayCharge;
+
+    // 1. Prepare Transaction Data Variables
+    double paidAmount = total;
+    double changeAmount = 0;
+
+    // Handle Cash Payment Input
+    if (selectedPaymentMethod == 'Cash') {
+      final double? cashResult = await showDialog<double>(
+        context: context,
+        builder: (context) => CashPaymentDialog(totalAmount: total),
+      );
+
+      if (cashResult == null) return; // User cancelled
+      paidAmount = cashResult;
+      changeAmount = paidAmount - total;
+    }
+
     final transactionItems = cartItems.map((item) {
       return {
         "product": item.product['id'],
@@ -65,17 +91,19 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       "order_type": selectedOrderType == 'Dine In' ? "dine_in" : "take_away",
       "payment_method": selectedPaymentMethod.toLowerCase(),
       "status": selectedPaymentMethod == 'Cash' ? 'completed' : 'pending',
-      "paid_amount": total,
+      "paid_amount": paidAmount,
       "subtotal": subtotal,
-      "tax": tax,
+      "tax_percentage": settings.taxRate,
       "discount": 0,
       "total": total,
-      "change_amount": 0,
+      "change_amount": changeAmount,
       "notes": orderNotes,
       "items": transactionItems,
+      "takeaway_charge": takeAwayCharge,
     };
 
     // 2. Create Transaction
+    if (!mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -90,12 +118,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
     if (transaction == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(ref.read(transactionProvider).errorMessage ??
-                'Transaction creation failed'),
-          ),
-        );
+        showErrorDialog(
+            context,
+            ref.read(transactionProvider).errorMessage ??
+                'Transaction creation failed');
       }
       return;
     }
@@ -129,30 +155,37 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         );
 
         if (paymentResult == true) {
-          if (mounted) _showSuccessDialog();
+          if (mounted) {
+            _showSuccessDialog(
+                total: total, paid: paidAmount, change: changeAmount);
+          }
         }
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(ref.read(paymentProvider).errorMessage ??
-                  'Payment creation failed'),
-            ),
-          );
+          showErrorDialog(
+              context,
+              ref.read(paymentProvider).errorMessage ??
+                  'Payment creation failed',
+              title: 'Payment with $selectedPaymentMethod Failed');
         }
       }
     } else {
-      if (mounted) _showSuccessDialog();
+      if (mounted) {
+        _showSuccessDialog(
+            total: total, paid: paidAmount, change: changeAmount);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final cartItems = ref.watch(cartProvider);
+    final cartItems = ref.read(cartProvider);
+    final settings = ref.read(settingProvider);
     final subtotal = ref.read(cartProvider.notifier).getTotalCartPrice();
-    final tax = subtotal * 0.1;
-    final serviceCharge = cartItems.isEmpty ? 0.0 : 2000.0;
-    final total = subtotal + tax + serviceCharge;
+    final tax = subtotal * (settings.taxRate / 100);
+    final takeAwayCharge =
+        selectedOrderType == 'Take Away' ? settings.takeAwayCharge : 0.0;
+    final total = subtotal + tax + takeAwayCharge;
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
@@ -179,7 +212,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               onNotesChanged: (val) => setState(() => orderNotes = val),
               subtotal: subtotal,
               tax: tax,
-              serviceCharge: serviceCharge,
+              taxRate: settings.taxRate,
+              takeAwayCharge: takeAwayCharge,
               total: total,
               isCartEmpty: cartItems.isEmpty,
               onConfirm: () => _handleConfirmPayment(),

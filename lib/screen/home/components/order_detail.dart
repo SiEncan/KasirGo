@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir_go/providers/cart_provider.dart';
+import 'package:kasir_go/providers/setting_provider.dart';
 import 'package:kasir_go/screen/checkout/checkout_screen.dart';
 import 'package:kasir_go/utils/currency_helper.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -432,6 +433,7 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
     ref.listen<List<CartState>>(cartProvider, _onCartChanged);
 
     final cartItems = ref.watch(cartProvider);
+    final settings = ref.read(settingProvider);
 
     return Expanded(
       flex: 2,
@@ -567,21 +569,12 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text("Tax (10%)"),
+                    Text("Tax (${settings.taxRate}%)"),
                     Text(CurrencyHelper.formatIDR(
                         (ref.read(cartProvider.notifier).getTotalCartPrice() *
-                                0.1)
+                                settings.taxRate /
+                                100)
                             .toString())),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text("Service Charge"),
-                    cartItems.isEmpty
-                        ? Text(CurrencyHelper.formatIDR("0"))
-                        : Text(CurrencyHelper.formatIDR("2000")),
                   ],
                 ),
                 const Divider(height: 24),
@@ -599,8 +592,8 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
                                   ref
                                           .read(cartProvider.notifier)
                                           .getTotalCartPrice() *
-                                      0.1 +
-                                  (cartItems.isEmpty ? 0 : 2000))
+                                      settings.taxRate /
+                                      100)
                               .toString()),
                       style: const TextStyle(
                           fontSize: 20, fontWeight: FontWeight.bold),
