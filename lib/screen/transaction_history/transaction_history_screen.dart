@@ -11,6 +11,9 @@ class TransactionHistoryScreen extends StatefulWidget {
 }
 
 class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
+  TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,25 +75,52 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                     child: TextField(
                       controller: TextEditingController(),
                       decoration: InputDecoration(
-                        hintText: "Search",
-                        prefixIcon: const Icon(Iconsax.search_normal, size: 20),
-                        filled: true,
-                        fillColor: Colors.grey.shade100,
+                        hintText: 'Search',
+                        hintStyle: TextStyle(
+                          color: Colors.grey.shade400,
+                          fontSize: 14,
+                          fontWeight: FontWeight.normal,
+                        ),
+                        prefixIcon: Icon(
+                          Iconsax.search_normal,
+                          color: Colors.grey.shade500,
+                          size: 20,
+                        ),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: Icon(
+                                  Icons.clear,
+                                  color: Colors.grey.shade500,
+                                  size: 20,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _searchController.clear();
+                                    _searchQuery = '';
+                                  });
+                                },
+                              )
+                            : null,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide(
-                            color: Colors.grey.shade200,
-                            width: 2,
+                            color: Colors.grey.shade300,
+                            width: 1,
                           ),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide(
-                            color: Colors.grey.shade500,
-                            width: 2,
+                            color: Colors.orange.shade600,
+                            width: 1.5,
                           ),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                        filled: true,
+                        fillColor: Colors.white,
                       ),
                     ),
                   ),
@@ -124,10 +154,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           // List 1
                           ListView.builder(
                             padding: const EdgeInsets.all(0),
-                            shrinkWrap:
-                                true, // Wajib: agar list tidak mencoba expand tanpa batas
-                            physics:
-                                const NeverScrollableScrollPhysics(), // Wajib: matikan scroll list ini
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
                             itemCount: 5,
                             itemBuilder: (context, index) {
                               final amount = (index + 1) * 15000;
@@ -156,15 +184,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                               textAlign: TextAlign.left,
                                               style: const TextStyle(
                                                 fontSize: 16,
-                                                fontWeight: FontWeight.w400,
                                               ),
                                             ),
                                             Text(
                                               '8.45 AM',
                                               textAlign: TextAlign.left,
                                               style: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w400,
                                                 color: Colors.grey.shade600,
                                               ),
                                             ),
@@ -303,8 +328,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           child: Container(
                             width: 400,
                             color: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 48, vertical: 32),
+                            padding: const EdgeInsets.all(48),
                             child: SingleChildScrollView(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
