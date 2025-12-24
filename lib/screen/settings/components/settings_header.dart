@@ -7,7 +7,7 @@ class SettingsHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      // margin
+      margin: const EdgeInsets.only(bottom: 24),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 21),
       decoration: BoxDecoration(
         color: Colors.white,
