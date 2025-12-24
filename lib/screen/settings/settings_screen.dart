@@ -139,7 +139,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SettingsHeader(),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.only(right: 24, left: 24, top: 24),
               child: Column(
                 children: [
                   // Main Layout: 2 Columns
