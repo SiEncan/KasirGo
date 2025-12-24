@@ -302,9 +302,7 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
                     image: DecorationImage(
-                      image: NetworkImage(
-                        ("http://10.0.2.2:8000${item.product['image']}"),
-                      ),
+                      image: NetworkImage(item.product['image']),
                       fit: BoxFit.cover,
                     ),
                   ),

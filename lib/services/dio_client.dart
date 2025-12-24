@@ -5,7 +5,8 @@ import '../utils/token_storage.dart';
 import 'auth_service.dart';
 
 class DioClient {
-  static const String baseUrl = "http://10.0.2.2:8000/api";
+  static const String baseUrl = "https://kasir-go-backend.vercel.app/api";
+  // static const String baseUrl = "http://10.0.2.2:8000/api";
   // static const String baseUrl = "http://localhost:8000/api";
 
   final Dio _dio;
@@ -51,7 +52,8 @@ class DioClient {
               await authService.refreshAccessToken();
               accessToken = await tokenStorage.getAccessToken();
             } catch (e) {
-              final error = e is AppException ? e : AppException.sessionExpired();
+              final error =
+                  e is AppException ? e : AppException.sessionExpired();
               return handler.reject(
                 DioException(
                   requestOptions: options,
@@ -79,7 +81,8 @@ class DioClient {
               return handler.resolve(response);
             } catch (e) {
               // Propagate the actual error from refreshAccessToken
-              final appError = e is AppException ? e : AppException.sessionExpired();
+              final appError =
+                  e is AppException ? e : AppException.sessionExpired();
               return handler.reject(
                 DioException(
                   requestOptions: error.requestOptions,

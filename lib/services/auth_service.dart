@@ -8,7 +8,8 @@ import '../utils/token_storage.dart';
 import 'dio_client.dart';
 
 class AuthService {
-  final String baseUrl = "http://10.0.2.2:8000/api";
+  final String baseUrl = "https://kasir-go-backend.vercel.app/api";
+  // final String baseUrl = "http://10.0.2.2:8000/api";
   // final String baseUrl = "http://localhost:8000/api";
   final TokenStorage tokenStorage;
   DioClient? dioClient;
@@ -20,21 +21,24 @@ class AuthService {
     final url = Uri.parse("$baseUrl/auth/login/");
 
     try {
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "username": username,
-          "password": password,
-        }),
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .post(
+            url,
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({
+              "username": username,
+              "password": password,
+            }),
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
         try {
           final errorJson = jsonDecode(response.body);
-          if (errorJson['detail'] == 'No active account found with the given credentials') {
+          if (errorJson['detail'] ==
+              'No active account found with the given credentials') {
             throw AppException.server('Username or password is wrong');
           }
           throw AppException.server(errorJson['detail'] ?? 'Login failed');
@@ -68,15 +72,18 @@ class AuthService {
     final url = Uri.parse("$baseUrl/auth/refresh/");
 
     try {
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"refresh": refreshToken}),
-      ).timeout(const Duration(seconds: 5));
+      final response = await http
+          .post(
+            url,
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({"refresh": refreshToken}),
+          )
+          .timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        await tokenStorage.saveTokens(data['access'], data['refresh'] ?? refreshToken);
+        await tokenStorage.saveTokens(
+            data['access'], data['refresh'] ?? refreshToken);
       } else {
         await tokenStorage.clear();
         throw AppException.sessionExpired();

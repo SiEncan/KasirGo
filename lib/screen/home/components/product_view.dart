@@ -178,7 +178,7 @@ class _ProductCardState extends State<_ProductCard>
                         borderRadius: BorderRadius.circular(12),
                         child: imageUrl != null && imageUrl.isNotEmpty
                             ? Image.network(
-                                'http://10.0.2.2:8000$imageUrl',
+                                imageUrl,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
                                   return Icon(

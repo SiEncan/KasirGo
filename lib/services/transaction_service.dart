@@ -44,7 +44,7 @@ class TransactionService {
   Future<Map<String, dynamic>> getTransaction(int transactionId) async {
     try {
       final response = await dioClient.dio.get(
-        '/transaction/$transactionId',
+        '/transaction/$transactionId/',
       );
       return response.data;
     } on DioException catch (e) {

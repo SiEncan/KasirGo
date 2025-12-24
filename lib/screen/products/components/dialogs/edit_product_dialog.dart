@@ -205,7 +205,7 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(10),
                                   child: Image.network(
-                                    "http://10.0.2.2:8000${widget.product['image']}",
+                                    widget.product['image'],
                                     fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) {
                                       return Container(
