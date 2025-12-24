@@ -4,6 +4,7 @@ import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
 import 'package:kasir_go/providers/transaction_provider.dart';
 import 'package:kasir_go/utils/currency_helper.dart';
+import 'package:kasir_go/utils/snackbar_helper.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class TransactionList extends ConsumerStatefulWidget {
@@ -47,6 +48,11 @@ class _TransactionListState extends ConsumerState<TransactionList> {
     }
 
     if (state.errorMessage != null && state.transactions.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          showErrorSnackBar(context, state.errorMessage!);
+        }
+      });
       return Center(child: Text('Error: ${state.errorMessage}'));
     }
 
