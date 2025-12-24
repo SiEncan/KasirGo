@@ -29,6 +29,16 @@ class PaymentService {
     }
   }
 
+  Future<void> cancelTransaction(int transactionId) async {
+    try {
+      await dioClient.dio.post('/transaction/$transactionId/cancel/');
+    } on DioException catch (e) {
+      // We don't throw error here to avoid blocking UI, just log it or ignore
+      // But for better DX we can throw
+      throw _handleError(e, 'Failed to cancel transaction');
+    }
+  }
+
   /// Extract AppException from DioException or create fallback
   AppException _handleError(DioException e, String fallback) {
     if (e.error is AppException) return e.error as AppException;

@@ -103,6 +103,20 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     }
   }
 
+  Future<void> cancelCurrentTransaction() async {
+    final paymentData = state.currentPayment;
+    if (paymentData != null && paymentData['transaction_id'] != null) {
+      try {
+        stopPolling();
+        await _service.cancelTransaction(paymentData['transaction_id']);
+      } catch (e) {
+        // Ignore error on cancel, as we are leaving anyway
+        // state = state.copyWith(errorMessage: "Failed to cancel: $e");
+      }
+    }
+    reset();
+  }
+
   void reset() {
     stopPolling();
     state = PaymentState();

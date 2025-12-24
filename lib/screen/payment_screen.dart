@@ -34,216 +34,236 @@ class PaymentScreen extends ConsumerWidget {
       );
     }
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Payment',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(LucideIcons.x, color: Colors.black),
-          onPressed: () {
-            ref.read(paymentProvider.notifier).reset();
-            Navigator.of(context).pop(false);
-          },
-        ),
-      ),
-      body: SafeArea(
-        child: paymentState.isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : paymentData == null && paymentState.errorMessage != null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.error, size: 64, color: Colors.red),
-                        const SizedBox(height: 16),
-                        Text(
-                          paymentState.errorMessage!,
-                          style:
-                              const TextStyle(fontSize: 18, color: Colors.red),
-                          textAlign: TextAlign.center,
+    return PopScope(
+        canPop: true,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) {
+            // Screen is already popping/popped
+            final isSuccess = ref.read(paymentProvider).isPaymentSuccess;
+            if (!isSuccess) {
+              // Cancel transaction if leaving without success
+              ref.read(paymentProvider.notifier).cancelCurrentTransaction();
+            } else {
+              // Just reset if successful (though usually handled before)
+              ref.read(paymentProvider.notifier).reset();
+            }
+          }
+        },
+        child: Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            title: const Text('Payment',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            backgroundColor: Colors.white,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(LucideIcons.x, color: Colors.black),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+            ),
+          ),
+          body: SafeArea(
+            child: paymentState.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : paymentData == null && paymentState.errorMessage != null
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.error,
+                                size: 64, color: Colors.red),
+                            const SizedBox(height: 16),
+                            Text(
+                              paymentState.errorMessage!,
+                              style: const TextStyle(
+                                  fontSize: 18, color: Colors.red),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text('Close'),
+                            )
+                          ],
                         ),
-                        const SizedBox(height: 24),
-                        ElevatedButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: const Text('Close'),
-                        )
-                      ],
-                    ),
-                  )
-                : Center(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.orange.shade50,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2)),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Awaiting Payment...',
-                                  style: TextStyle(
-                                      color: Colors.orange,
-                                      fontWeight: FontWeight.bold),
+                      )
+                    : Center(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.shade50,
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 40),
-
-                          // Virtual Account Display
-                          if (paymentData?['va_number'] != null) ...[
-                            Container(
-                              padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(24),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.shade200,
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                                border: Border.all(color: Colors.grey.shade100),
-                              ),
-                              child: Column(
-                                children: [
-                                  const Text(
-                                    'BCA Virtual Account',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.grey,
-                                      fontWeight: FontWeight.w600,
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2)),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Awaiting Payment...',
+                                      style: TextStyle(
+                                          color: Colors.orange,
+                                          fontWeight: FontWeight.bold),
                                     ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 40),
+
+                              // Virtual Account Display
+                              if (paymentData?['va_number'] != null) ...[
+                                Container(
+                                  padding: const EdgeInsets.all(24),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(24),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.shade200,
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                    border:
+                                        Border.all(color: Colors.grey.shade100),
                                   ),
-                                  const SizedBox(height: 16),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                                  child: Column(
                                     children: [
-                                      Text(
-                                        paymentData!['va_number'],
-                                        style: const TextStyle(
-                                          fontSize: 28,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 1.2,
+                                      const Text(
+                                        'BCA Virtual Account',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.grey,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
-                                      const SizedBox(width: 12),
-                                      IconButton(
-                                        onPressed: () {
-                                          Clipboard.setData(ClipboardData(
-                                              text: paymentData['va_number']));
-                                        },
-                                        icon: const Icon(LucideIcons.copy,
-                                            size: 20),
-                                        tooltip: "Copy",
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            paymentData!['va_number'],
+                                            style: const TextStyle(
+                                              fontSize: 28,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 1.2,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          IconButton(
+                                            onPressed: () {
+                                              Clipboard.setData(ClipboardData(
+                                                  text: paymentData[
+                                                      'va_number']));
+                                            },
+                                            icon: const Icon(LucideIcons.copy,
+                                                size: 20),
+                                            tooltip: "Copy",
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      const Text(
+                                        'Salin nomor VA ini ke m-BCA atau ATM BCA',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                            color: Colors.grey, fontSize: 12),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 8),
-                                  const Text(
-                                    'Salin nomor VA ini ke m-BCA atau ATM BCA',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                        color: Colors.grey, fontSize: 12),
+                                ),
+                              ] else if (paymentData?['qr_string'] != null) ...[
+                                Container(
+                                  padding: const EdgeInsets.all(24),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(24),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.shade200,
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                    border:
+                                        Border.all(color: Colors.grey.shade100),
                                   ),
-                                ],
+                                  child: Column(
+                                    children: [
+                                      QrImageView(
+                                        data: paymentData!['qr_string'],
+                                        version: QrVersions.auto,
+                                        size: 260.0,
+                                      ),
+                                      const SizedBox(height: 24),
+                                      const Text(
+                                        'Scan QRIS to Pay',
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'NMID: ${paymentData['reference'] ?? '-'}',
+                                        style: TextStyle(
+                                            color: Colors.grey.shade500),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+
+                              const SizedBox(height: 40),
+
+                              // Total Amount
+                              Text(
+                                'Total Amount',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade500,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
-                            ),
-                          ] else if (paymentData?['qr_string'] != null) ...[
-                            Container(
-                              padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(24),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.shade200,
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                                border: Border.all(color: Colors.grey.shade100),
+                              const SizedBox(height: 8),
+                              Text(
+                                CurrencyHelper.formatIDR(
+                                    paymentData!['amount']),
+                                style: const TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.deepOrange,
+                                ),
                               ),
-                              child: Column(
-                                children: [
-                                  QrImageView(
-                                    data: paymentData!['qr_string'],
-                                    version: QrVersions.auto,
-                                    size: 260.0,
-                                  ),
-                                  const SizedBox(height: 24),
-                                  const Text(
-                                    'Scan QRIS to Pay',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'NMID: ${paymentData['reference'] ?? '-'}',
-                                    style:
-                                        TextStyle(color: Colors.grey.shade500),
-                                  ),
-                                ],
+
+                              const SizedBox(height: 40),
+
+                              const Text(
+                                'Open any e-wallet or banking app\nand scan the QR code above.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  height: 1.5,
+                                ),
                               ),
-                            ),
-                          ],
-
-                          const SizedBox(height: 40),
-
-                          // Total Amount
-                          Text(
-                            'Total Amount',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey.shade500,
-                              fontWeight: FontWeight.w500,
-                            ),
+                            ],
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            CurrencyHelper.formatIDR(paymentData!['amount']),
-                            style: const TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.deepOrange,
-                            ),
-                          ),
-
-                          const SizedBox(height: 40),
-
-                          const Text(
-                            'Open any e-wallet or banking app\nand scan the QR code above.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.grey,
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
-      ),
-    );
+          ),
+        ));
   }
 }

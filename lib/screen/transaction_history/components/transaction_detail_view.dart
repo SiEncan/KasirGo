@@ -58,7 +58,13 @@ class TransactionDetailView extends ConsumerWidget {
     final notes = transaction['notes'] ?? '';
     String orderType = transaction['order_type'] ?? '-';
 
-    final status = transaction['status'] == 'completed' ? 'Paid' : 'Unpaid';
+    final status = transaction['status'] == 'completed'
+        ? 'Paid'
+        : transaction['status'] == 'pending'
+            ? 'Unpaid'
+            : transaction['status'] == 'cancelled'
+                ? 'Cancelled'
+                : 'Failed';
 
     if (orderType.isNotEmpty && orderType != '-') {
       orderType = orderType
