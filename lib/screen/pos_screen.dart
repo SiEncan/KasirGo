@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kasir_go/component/main_navigation_rail.dart';
 import 'package:kasir_go/screen/products/products_screen.dart';
-import 'package:kasir_go/screen/profile_screen.dart';
+import 'package:kasir_go/screen/profile/profile_screen.dart';
 import 'package:kasir_go/screen/home/home_screen.dart';
 import 'package:kasir_go/screen/transaction_history/transaction_history_screen.dart';
 import 'package:kasir_go/screen/settings/settings_screen.dart';

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
 import 'package:barcode_widget/barcode_widget.dart';
+import 'package:kasir_go/providers/setting_provider.dart';
 import 'package:kasir_go/providers/transaction_provider.dart';
 import 'package:kasir_go/screen/transaction_history/components/receipt_widgets.dart';
 import 'package:kasir_go/utils/currency_helper.dart';
@@ -14,6 +15,7 @@ class TransactionDetailView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(transactionProvider);
     final transaction = state.selectedTransaction;
+    final settings = ref.read(settingProvider);
 
     if (state.isLoadingDetail) {
       return Center(
@@ -87,7 +89,7 @@ class TransactionDetailView extends ConsumerWidget {
     return Column(
       children: [
         Text(
-          "KasirGo",
+          settings.storeName,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 24,
@@ -97,7 +99,7 @@ class TransactionDetailView extends ConsumerWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Jl. Setiabudhi No. 123, Jakarta',
+          settings.storeAddress,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 13,
@@ -106,7 +108,7 @@ class TransactionDetailView extends ConsumerWidget {
           ),
         ),
         Text(
-          'Telp: 021-23456789',
+          'Telp: ${settings.storePhone}',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 13,
@@ -557,26 +559,7 @@ class TransactionDetailView extends ConsumerWidget {
           child: DashedDivider(color: Colors.grey.shade700),
         ),
         Text(
-          'Terima kasih atas kunjungan anda!',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w300,
-            color: Colors.grey.shade900,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Barang yang sudah dibeli tidak dapat',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w300,
-            color: Colors.grey.shade900,
-          ),
-        ),
-        Text(
-          'dikembalikan',
+          settings.receiptFooter,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 13,

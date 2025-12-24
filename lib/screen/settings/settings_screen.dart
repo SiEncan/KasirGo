@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir_go/providers/setting_provider.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:kasir_go/screen/settings/components/settings_header.dart';
+import 'package:kasir_go/screen/settings/components/settings_section.dart';
+import 'package:kasir_go/screen/settings/components/settings_text_field.dart';
+import 'package:kasir_go/screen/settings/components/calculation_preview.dart';
+import 'package:kasir_go/screen/settings/components/settings_action_buttons.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -10,164 +16,228 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  // Controllers
+  late TextEditingController _storeNameController;
+  late TextEditingController _storeAddressController;
+  late TextEditingController _storePhoneController;
   late TextEditingController _taxController;
   late TextEditingController _takeAwayChargeController;
+  late TextEditingController _footerController;
 
   @override
   void initState() {
     super.initState();
     final settings = ref.read(settingProvider);
+    _initializeControllers(settings);
+  }
+
+  void _initializeControllers(SettingState settings) {
+    _storeNameController = TextEditingController(text: settings.storeName);
+    _storeAddressController =
+        TextEditingController(text: settings.storeAddress);
+    _storePhoneController = TextEditingController(text: settings.storePhone);
     _taxController = TextEditingController(text: settings.taxRate.toString());
     _takeAwayChargeController =
-        TextEditingController(text: settings.takeAwayCharge.toString());
+        TextEditingController(text: settings.takeAwayCharge.toStringAsFixed(0));
+    _footerController = TextEditingController(text: settings.receiptFooter);
   }
 
   @override
   void dispose() {
+    _storeNameController.dispose();
+    _storeAddressController.dispose();
+    _storePhoneController.dispose();
     _taxController.dispose();
     _takeAwayChargeController.dispose();
+    _footerController.dispose();
     super.dispose();
   }
 
-  void _saveSettings() {
-    final tax = int.tryParse(_taxController.text) ?? 0;
-    final takeAwayCharge =
-        double.tryParse(_takeAwayChargeController.text) ?? 0.0;
+  Future<void> _saveSettings() async {
+    final tax = int.tryParse(_taxController.text) ?? 11;
+    final takeAwayCharge = double.tryParse(
+            _takeAwayChargeController.text.replaceAll(RegExp(r'[^0-9]'), '')) ??
+        0.0;
 
-    ref.read(settingProvider.notifier).updateTaxRate(tax);
-    ref.read(settingProvider.notifier).updateTakeAwayCharge(takeAwayCharge);
+    await ref.read(settingProvider.notifier).saveSettings(
+          storeName: _storeNameController.text,
+          storeAddress: _storeAddressController.text,
+          storePhone: _storePhoneController.text,
+          taxRate: tax,
+          takeAwayCharge: takeAwayCharge,
+          receiptFooter: _footerController.text,
+        );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Settings saved successfully')),
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pengaturan berhasil disimpan'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+
+  Future<void> _resetDefault() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reset Default'),
+        content: const Text(
+            'Apakah Anda yakin ingin mengembalikan pengaturan ke awal?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Batal')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Reset', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
     );
+
+    if (confirm == true) {
+      await ref.read(settingProvider.notifier).resetToDefault();
+      if (mounted) {
+        // Re-init controllers with new state
+        final settings = ref.read(settingProvider);
+        setState(() {
+          _initializeControllers(settings);
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Pengaturan dikembalikan ke default')),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Settings',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 24),
-            _buildSettingCard(
-              title: 'Tax Rate (%)',
-              subtitle: 'Set the applicable tax rate for transactions.',
-              controller: _taxController,
-              icon: Icons.percent,
-              isPercentage: true,
-            ),
-            const SizedBox(height: 16),
-            _buildSettingCard(
-              title: 'Take Away Charge (Rp)',
-              subtitle: 'Set the fixed charge for take away orders.',
-              controller: _takeAwayChargeController,
-              icon: Icons.shopping_bag,
-              isPercentage: false,
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _saveSettings,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Save Changes',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+    // Listen to changes to keep UI in sync if external updates happen
+    final settings = ref.watch(settingProvider);
 
-  Widget _buildSettingCard({
-    required String title,
-    required String subtitle,
-    required TextEditingController controller,
-    required IconData icon,
-    required bool isPercentage,
-  }) {
-    return Card(
-      color: Colors.white,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.shade200),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: Colors.orange),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
+    // We update controllers if the state isLoading changes from true to false (initial load)
+    ref.listen(settingProvider, (previous, next) {
+      if (previous?.isLoading == true && next.isLoading == false) {
+        _initializeControllers(next);
+        setState(() {});
+      }
+    });
+
+    if (settings.isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    return Scaffold(
+      backgroundColor: Colors.grey.shade100,
+      body: Column(
+        children: [
+          // Header
+          const SettingsHeader(),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                  // Main Layout: 2 Columns
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Left Column: Informasi Toko
+                        Expanded(
+                          child: SettingsSection(
+                            title: "Informasi Toko",
+                            subtitle: "Detail toko yang tampil di struk",
+                            icon: LucideIcons.store,
+                            iconColor: Colors.orange.shade800,
+                            iconBgColor: Colors.orange.shade50,
+                            children: [
+                              SettingsTextField(
+                                  label: "Nama Toko",
+                                  controller: _storeNameController),
+                              const SizedBox(height: 16),
+                              SettingsTextField(
+                                  label: "Alamat Toko",
+                                  controller: _storeAddressController),
+                              const SizedBox(height: 16),
+                              SettingsTextField(
+                                label: "No. Telepon",
+                                controller: _storePhoneController,
+                                keyboardType: TextInputType.phone,
+                              ),
+                              const SizedBox(height: 16),
+                              SettingsTextField(
+                                label: "Footer Struk",
+                                controller: _footerController,
+                                maxLines: 3,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 24),
+                        // Right Column: Pajak & Biaya + Preview + Tombol
+                        Expanded(
+                          child: Column(
+                            children: [
+                              SettingsSection(
+                                title: "Pajak & Biaya",
+                                subtitle: "Pengaturan pajak dan biaya tambahan",
+                                icon: LucideIcons.percent,
+                                iconColor:
+                                    const Color.fromARGB(255, 53, 223, 59),
+                                iconBgColor:
+                                    const Color.fromARGB(200, 232, 245, 233),
+                                children: [
+                                  SettingsTextField(
+                                    label: "Tax Rate (%)",
+                                    controller: _taxController,
+                                    keyboardType: TextInputType.number,
+                                    suffixText: "%",
+                                    helperText:
+                                        "Pajak akan dihitung dari subtotal pesanan",
+                                    onChanged: () => setState(() {}),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  SettingsTextField(
+                                    label: "Biaya Take Away",
+                                    controller: _takeAwayChargeController,
+                                    keyboardType: TextInputType.number,
+                                    prefixText: "Rp ",
+                                    helperText:
+                                        "Biaya tambahan untuk pesanan Take Away: Rp ${_takeAwayChargeController.text}",
+                                    onChanged: () => setState(() {}),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 24),
+                              Expanded(
+                                child: CalculationPreview(
+                                  taxController: _taxController,
+                                  takeAwayChargeController:
+                                      _takeAwayChargeController,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              SettingsActionButtons(
+                                onReset: _resetDefault,
+                                onSave: _saveSettings,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: controller,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      suffixText: isPercentage ? '%' : null,
-                      prefixText: !isPercentage ? 'Rp ' : null,
-                    ),
-                  ),
+                  const SizedBox(height: 50),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
