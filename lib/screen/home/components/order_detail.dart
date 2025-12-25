@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir_go/providers/cart_provider.dart';
 import 'package:kasir_go/providers/setting_provider.dart';
@@ -296,14 +297,20 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
       child: Row(
         children: [
           item.product['image'] != null
-              ? Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    image: DecorationImage(
-                      image: NetworkImage(item.product['image']),
-                      fit: BoxFit.cover,
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: CachedNetworkImage(
+                    width: 80,
+                    height: 80,
+                    imageUrl: item.product['image'],
+                    fit: BoxFit.cover,
+                    memCacheWidth: 500,
+                    placeholder: (context, url) => const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    errorWidget: (context, url, error) => const Icon(
+                      Icons.image_not_supported,
+                      color: Colors.grey,
                     ),
                   ),
                 )

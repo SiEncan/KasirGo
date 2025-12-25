@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir_go/providers/cart_provider.dart';
 import 'package:kasir_go/utils/currency_helper.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class CheckoutLeftPanel extends ConsumerWidget {
@@ -168,30 +169,43 @@ class CheckoutLeftPanel extends ConsumerWidget {
                                 flex: 4,
                                 child: Row(
                                   children: [
-                                    Container(
-                                      width: 56,
-                                      height: 56,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(10),
-                                        color: Colors.grey.shade100,
-                                      ),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
                                       child: item.product['image'] != null
-                                          ? ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              child: Image.network(
-                                                '${item.product['image']}',
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (_, __, ___) =>
-                                                    Icon(
-                                                  Icons.restaurant,
-                                                  color: Colors.grey.shade400,
+                                          ? CachedNetworkImage(
+                                              width: 56,
+                                              height: 56,
+                                              imageUrl: item.product['image'],
+                                              fit: BoxFit.cover,
+                                              memCacheWidth: 500,
+                                              placeholder: (context, url) =>
+                                                  Container(
+                                                color: Colors.grey.shade200,
+                                                child: Center(
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                    color:
+                                                        Colors.orange.shade300,
+                                                  ),
                                                 ),
                                               ),
+                                              errorWidget:
+                                                  (context, url, error) => Icon(
+                                                Icons.restaurant,
+                                                color: Colors.grey.shade400,
+                                              ),
                                             )
-                                          : Icon(
-                                              Icons.restaurant,
-                                              color: Colors.grey.shade400,
+                                          : Container(
+                                              width: 56,
+                                              height: 56,
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey.shade100,
+                                              ),
+                                              child: Icon(
+                                                Icons.restaurant,
+                                                color: Colors.grey.shade400,
+                                              ),
                                             ),
                                     ),
                                     const SizedBox(width: 16),

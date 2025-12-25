@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -193,33 +194,39 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
                               )
                             else if (widget.product['image'] != null)
                               Container(
-                                width: 200,
-                                height: 200,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: Colors.grey.shade300,
-                                    width: 2,
+                                  width: 200,
+                                  height: 200,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Colors.grey.shade300,
+                                      width: 2,
+                                    ),
                                   ),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Image.network(
-                                    widget.product['image'],
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Container(
-                                        color: Colors.grey.shade100,
-                                        child: Icon(
-                                          Icons.image_outlined,
-                                          size: 48,
-                                          color: Colors.grey.shade400,
+                                  child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: CachedNetworkImage(
+                                        imageUrl: widget.product['image'],
+                                        memCacheWidth: 500,
+                                        fit: BoxFit.cover,
+                                        placeholder: (context, url) =>
+                                            Container(
+                                          color: Colors.grey.shade200,
+                                          child: Center(
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.orange.shade300,
+                                            ),
+                                          ),
                                         ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              )
+                                        errorWidget: (context, url, error) {
+                                          return Icon(
+                                            Icons.image_not_supported,
+                                            size: 48,
+                                            color: Colors.grey.shade400,
+                                          );
+                                        },
+                                      )))
                             else
                               Container(
                                 width: 200,
@@ -232,23 +239,10 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
                                     width: 2,
                                   ),
                                 ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.image_outlined,
-                                      size: 48,
-                                      color: Colors.grey.shade400,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      "No image",
-                                      style: TextStyle(
-                                        color: Colors.grey.shade600,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
+                                child: Icon(
+                                  Icons.restaurant,
+                                  size: 96,
+                                  color: Colors.grey.shade400,
                                 ),
                               ),
                             const SizedBox(height: 16),

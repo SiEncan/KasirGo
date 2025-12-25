@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir_go/providers/cart_provider.dart';
 import 'package:kasir_go/utils/currency_helper.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ProductView extends ConsumerWidget {
   final List<Map<String, dynamic>> products;
@@ -177,10 +178,20 @@ class _ProductCardState extends State<_ProductCard>
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: imageUrl != null && imageUrl.isNotEmpty
-                            ? Image.network(
-                                imageUrl,
+                            ? CachedNetworkImage(
+                                imageUrl: imageUrl,
+                                memCacheWidth: 500,
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
+                                placeholder: (context, url) => Container(
+                                  color: Colors.grey.shade200,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.orange.shade300,
+                                    ),
+                                  ),
+                                ),
+                                errorWidget: (context, url, error) {
                                   return Icon(
                                     Icons.image_not_supported,
                                     size: 40,

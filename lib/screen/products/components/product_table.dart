@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax/iconsax.dart';
@@ -152,37 +153,35 @@ class ProductTable extends ConsumerWidget {
         child: Row(
           children: [
             product['image'] != null
-                ? Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      image: DecorationImage(
-                        image: NetworkImage(product['image']),
-                        fit: BoxFit.cover,
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: CachedNetworkImage(
+                      imageUrl: product['image'],
+                      width: 48,
+                      height: 48,
+                      memCacheWidth: 500,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        color: Colors.grey.shade200,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.orange.shade300,
+                          ),
+                        ),
                       ),
-                    ),
-                  )
+                    ))
                 : Container(
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFF9800), Color(0xFFE65100)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
                       borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey.shade200,
                     ),
-                    child: Center(
-                      child: Text(
-                        product['name'][0].toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                    child: Icon(
+                      Icons.restaurant,
+                      size: 24,
+                      color: Colors.grey.shade400,
                     ),
                   ),
             const SizedBox(width: 12),
