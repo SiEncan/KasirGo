@@ -606,8 +606,6 @@ class TransactionDetailView extends ConsumerWidget {
                         context,
                         currentCustomerName: customer == '-' ? '' : customer,
                         currentNotes: notes,
-                        currentOrderType:
-                            transaction['order_type'] ?? 'dine_in',
                       );
 
                       if (changes != null && context.mounted) {

@@ -362,14 +362,9 @@ Future<Map<String, dynamic>?> showEditTransactionDialog(
   BuildContext context, {
   required String currentCustomerName,
   required String currentNotes,
-  required String currentOrderType,
 }) {
   final nameController = TextEditingController(text: currentCustomerName);
   final notesController = TextEditingController(text: currentNotes);
-
-  // ignore: unused_local_variable
-  String selectedOrderType =
-      currentOrderType; // We might want to make this a ValueNotifier if we use a dropdown
 
   return showDialog<Map<String, dynamic>>(
     context: context,

@@ -110,7 +110,7 @@ class _TransactionHistoryScreenState
                     child: TextField(
                       controller: _searchController,
                       decoration: InputDecoration(
-                        hintText: 'Search',
+                        hintText: 'Search by Trx No, Cust Name, or Notes..',
                         hintStyle: TextStyle(
                           color: Colors.grey.shade400,
                           fontSize: 14,
@@ -133,6 +133,9 @@ class _TransactionHistoryScreenState
                                     _searchController.clear();
                                     _searchQuery = '';
                                   });
+                                  ref
+                                      .read(transactionProvider.notifier)
+                                      .searchTransactions('');
                                 },
                               )
                             : null,
