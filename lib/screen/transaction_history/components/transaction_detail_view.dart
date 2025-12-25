@@ -7,6 +7,8 @@ import 'package:kasir_go/providers/setting_provider.dart';
 import 'package:kasir_go/providers/transaction_provider.dart';
 import 'package:kasir_go/screen/transaction_history/components/receipt_widgets.dart';
 import 'package:kasir_go/utils/currency_helper.dart';
+import 'package:kasir_go/utils/dialog_helper.dart';
+import 'package:kasir_go/utils/snackbar_helper.dart';
 
 class TransactionDetailView extends ConsumerWidget {
   const TransactionDetailView({super.key});
@@ -84,7 +86,7 @@ class TransactionDetailView extends ConsumerWidget {
       } catch (_) {}
     }
     final formattedDate =
-        date != null ? DateFormat('HH.mm dd MMM yy').format(date) : '-';
+        date != null ? DateFormat('HH:mm | dd/MM/yy').format(date) : '-';
 
     return Column(
       children: [
@@ -584,6 +586,108 @@ class TransactionDetailView extends ConsumerWidget {
             color: Colors.grey.shade900,
           ),
         ),
+
+        if (transaction['status'] != 'cancelled') ...[
+          const SizedBox(height: 32),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.only(top: 16),
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(color: Colors.grey.shade300, width: 1),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextButton.icon(
+                    onPressed: () async {
+                      final changes = await showEditTransactionDialog(
+                        context,
+                        currentCustomerName: customer == '-' ? '' : customer,
+                        currentNotes: notes,
+                        currentOrderType:
+                            transaction['order_type'] ?? 'dine_in',
+                      );
+
+                      if (changes != null && context.mounted) {
+                        final success = await ref
+                            .read(transactionProvider.notifier)
+                            .updateTransaction(transaction['id'], changes);
+
+                        if (context.mounted) {
+                          if (success) {
+                            showSuccessSnackBar(
+                                context, 'Transaction updated successfully');
+                          } else {
+                            showErrorSnackBar(
+                                context, 'Failed to update transaction');
+                          }
+                        }
+                      }
+                    },
+                    icon:
+                        const Icon(Iconsax.edit, color: Colors.blue, size: 18),
+                    label: const Text(
+                      "Edit Info",
+                      style: TextStyle(
+                          color: Colors.blue, fontWeight: FontWeight.bold),
+                    ),
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.blue.shade50,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextButton.icon(
+                    onPressed: () async {
+                      final confirm = await showDeleteConfirmDialog(context,
+                          title: 'Delete Transaction?',
+                          message:
+                              'This will delete the transaction and RESTORE stock. This action cannot be undone.\n\nUse this only for double transactions or errors.');
+                      if (confirm == true && context.mounted) {
+                        final success = await ref
+                            .read(transactionProvider.notifier)
+                            .deleteTransaction(transaction['id']);
+
+                        if (context.mounted) {
+                          if (success) {
+                            showSuccessSnackBar(
+                                context, 'Transaction deleted successfully');
+                          } else {
+                            showErrorSnackBar(
+                                context, 'Failed to delete transaction');
+                          }
+                        }
+                      }
+                    },
+                    icon:
+                        const Icon(Iconsax.trash, color: Colors.red, size: 18),
+                    label: const Text(
+                      "Void / Delete",
+                      style: TextStyle(
+                          color: Colors.red, fontWeight: FontWeight.bold),
+                    ),
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.red.shade50,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }

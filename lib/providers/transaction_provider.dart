@@ -181,6 +181,55 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
     }
   }
 
+  Future<bool> deleteTransaction(int id) async {
+    try {
+      await _service.deleteTransaction(id);
+
+      // Remove from local list if exists
+      final updatedTransactions =
+          state.transactions.where((t) => t['id'] != id).toList();
+
+      state = state.copyWith(
+        transactions: updatedTransactions,
+        selectedTransaction: state.selectedTransaction?['id'] == id
+            ? null
+            : state.selectedTransaction,
+      );
+
+      // Optionally re-fetch to be sure
+      await fetchTransactions(refresh: true);
+
+      return true;
+    } catch (e) {
+      state = state.copyWith(errorMessage: e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> updateTransaction(int id, Map<String, dynamic> data) async {
+    try {
+      final result = await _service.updateTransaction(id, data);
+      final updatedData = result['data'];
+
+      // Update local list
+      final updatedTransactions = state.transactions.map((t) {
+        return t['id'] == id ? updatedData : t;
+      }).toList();
+
+      state = state.copyWith(
+        transactions: List<Map<String, dynamic>>.from(updatedTransactions),
+        selectedTransaction: state.selectedTransaction?['id'] == id
+            ? updatedData
+            : state.selectedTransaction,
+      );
+
+      return true;
+    } catch (e) {
+      state = state.copyWith(errorMessage: e.toString());
+      return false;
+    }
+  }
+
   void reset() {
     state = TransactionState();
   }

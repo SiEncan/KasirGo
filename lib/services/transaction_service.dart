@@ -52,6 +52,29 @@ class TransactionService {
     }
   }
 
+  Future<void> deleteTransaction(int transactionId) async {
+    try {
+      await dioClient.dio.delete(
+        '/transaction/$transactionId/',
+      );
+    } on DioException catch (e) {
+      throw _handleError(e, 'Failed to delete transaction');
+    }
+  }
+
+  Future<Map<String, dynamic>> updateTransaction(
+      int transactionId, Map<String, dynamic> data) async {
+    try {
+      final response = await dioClient.dio.patch(
+        '/transaction/$transactionId/',
+        data: data,
+      );
+      return response.data;
+    } on DioException catch (e) {
+      throw _handleError(e, 'Failed to update transaction');
+    }
+  }
+
   /// Extract AppException from DioException or create fallback
   AppException _handleError(DioException e, String fallback) {
     if (e.error is AppException) return e.error as AppException;
