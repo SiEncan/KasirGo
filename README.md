@@ -6,7 +6,7 @@
 
 ---
 ## 📖 Overview
-KasirGo is a modern solution for small to medium retail businesses. Unlike traditional clunky POS systems, KasirGo focuses on **User Experience (UX)** and **Performance**. The app connects to a Django backend but is engineered to handle network instability gracefully through robust error handling and smart image caching.
+KasirGo is a modern solution for small to medium retail businesses. Unlike traditional clunky POS systems, KasirGo focuses on **User Experience (UX)** and **Performance**. The app connects to a robust Django backend (**[View Backend Repository](https://github.com/SiEncan/KasirGo-Backend)**) but is engineered to handle network instability gracefully through robust error handling and smart image caching.
 
 ---
 
@@ -26,11 +26,12 @@ KasirGo is a modern solution for small to medium retail businesses. Unlike tradi
 ### 📦 Inventory & Catalog Control
 -   **Full CRUD Management**: Add, Edit, and Delete Products and Categories with ease.
 -   **Smart Management**: Filter inventory by Category or Search to quickly update products.
+-   **Product Image Upload**: Supports uploading product images directly from device gallery (sent as **Multipart/Form-Data** to the backend).
 -   **Automated Stock System**:
     -   Stock decreases automatically upon checkout.
     -   **Auto-OOS**: Products automatically marked "Unavailable" when stock hits 0, removing them from the menu.
 
-### � Transaction History & Management
+### 📝 Transaction History & Management
 -   **Advanced Search**: Filter transactions by `Transaction No`, `Customer Name`, or `Notes`.
 -   **Digital Receipt**: Detailed transaction view mimicking a real receipt.
 -   **Void/Edit Transaction**:
@@ -45,7 +46,7 @@ KasirGo is a modern solution for small to medium retail businesses. Unlike tradi
 
 ---
 
-## 🧠 Technical Highlights
+## 🛠 Technical Highlights
 
 ### ⚡ Performance Optimization
 -   **Image Caching**: Implemented `CachedNetworkImage` with custom `memCacheWidth` to reduce memory usage by ~90% during heavy scrolling.
@@ -61,18 +62,18 @@ KasirGo is a modern solution for small to medium retail businesses. Unlike tradi
 
 ---
 
-## 🛠 Tech Stack
+## 🧰 Tech Stack
 
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)
-![Django](https://img.shields.io/badge/django-%23092E20.svg?style=for-the-badge&logo=django&logoColor=white)
-![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
-![Neon](https://img.shields.io/badge/Neon.com-00E599?style=for-the-badge&logo=neon&logoColor=black)
 
 -   **Framework**: [Flutter](https://flutter.dev/) (SDK 3.x)
 -   **State Management**: [Riverpod 2.0](https://riverpod.dev/) (Unidirectional Data Flow)
 -   **Networking**: Dio (with Interceptors for error handling)
--   **Assets & UI**: `cached_network_image` for memory optimization.
+-   **Assets & UI**: 
+    -   `cached_network_image`: Optimized image loading.
+    -   `qr_flutter`: Generate QRIS codes for dynamic payments from *Duitku* payment gateway.
+    -   `barcode_widget`: Render Code 128 barcodes for transaction receipts.
 -   **LocalStorage**: `flutter_secure_storage` for token management.
 
 ## 🏗 Architecture
@@ -91,6 +92,29 @@ lib/
 └── utils/           # Shared Helpers (Formatters, Dialogs)
 ```
 
+---
+
+## 💡 Key Challenges & Solutions
+
+### 1. High-Resolution Image Lag
+- **Challenge**: Loading hundreds of product images (4MB+ each) in a `GridView` caused significant frame drops and memory spikes on mid-range devices.  
+- **Solution**: Implemented `CachedNetworkImage` with specific `memCacheWidth` parameters. This forces the engine to decode images into smaller thumbnails in RAM, reducing memory usage by **~90%** and achieving 60 FPS scrolling.
+
+### 2. Complex Cart State Synchronization
+- **Challenge**: Managing cart updates (add, remove, update quantity, notes) across multiple screens caused data inconsistency.  
+- **Solution**: Leveraged **Riverpod's Immutable State** pattern (`CartState`). Every update recreates the state object, ensuring UI rebuilds are predictable and eliminating "ghost items" in the cart.
+
+### 3. Efficient Configuration Persistence
+- **Challenge**: Storing lightweight settings (Tax Rate, Takeaway Charges) in the database requires unnecessary schema changes, while keeping them in Riverpod state causes data loss on restart.  
+- **Solution**: Implemented a **Local-First Strategy** using `SharedPreferences`. Settings are persisted locally on the device, ensuring they survive app restarts without bloating the backend database.
+
+### 4. Secure Authentication Persistence
+- **Challenge**: Storing sensitive JWT tokens in `SharedPreferences` is insecure and prone to leaks.  
+- **Solution**: Integrated **Flutter Secure Storage** to encrypt tokens in the device's Keystore/Keychain. Coupled with **Dio Interceptors**, the app silently refreshes tokens without user intervention, balancing security with UX.
+
+### 5. Live Search Performance
+- **Challenge**: Searching through thousands of transaction records caused API spam and UI freezing.  
+- **Solution**: Implemented **Debouncing** (500ms) on the search input and optimized State Notifiers to only redraw the list when necessary, preventing unnecessary builds.
 
 ---
 
