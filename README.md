@@ -60,6 +60,31 @@ KasirGo is a modern solution for small to medium retail businesses. Unlike tradi
 -   **Unidirectional Data Flow**: Using Riverpod 2.0 Notifiers for predictable state changes.
 -   **Separation of Concerns**: Business logic decoupled from UI widgets.
 
+
+---
+
+## 💡 Key Challenges & Solutions
+
+### 1. High-Resolution Image Lag
+- **Challenge**: Loading hundreds of product images (4MB+ each) in a `GridView` caused significant frame drops and memory spikes on mid-range devices.  
+- **Solution**: Implemented `CachedNetworkImage` with specific `memCacheWidth` parameters. This forces the engine to decode images into smaller thumbnails in RAM, reducing memory usage by **~90%** and achieving 60 FPS scrolling.
+
+### 2. Complex Cart State Synchronization
+- **Challenge**: Managing cart updates (add, remove, update quantity, notes) across multiple screens caused data inconsistency.  
+- **Solution**: Leveraged **Riverpod's Immutable State** pattern (`CartState`). Every update recreates the state object, ensuring UI rebuilds are predictable and eliminating "ghost items" in the cart.
+
+### 3. Efficient Configuration Persistence
+- **Challenge**: Storing lightweight settings (Tax Rate, Takeaway Charges) in the database requires unnecessary schema changes, while keeping them in Riverpod state causes data loss on restart.  
+- **Solution**: Implemented a **Local-First Strategy** using `SharedPreferences`. Settings are persisted locally on the device, ensuring they survive app restarts without bloating the backend database.
+
+### 4. Secure Authentication Persistence
+- **Challenge**: Storing sensitive JWT tokens in `SharedPreferences` is insecure and prone to leaks.  
+- **Solution**: Integrated **Flutter Secure Storage** to encrypt tokens in the device's Keystore/Keychain. Coupled with **Dio Interceptors**, the app silently refreshes tokens without user intervention, balancing security with UX.
+
+### 5. Live Search Performance
+- **Challenge**: Searching through thousands of transaction records caused API spam and UI freezing.  
+- **Solution**: Implemented **Debouncing** (500ms) on the search input and optimized State Notifiers to only redraw the list when necessary, preventing unnecessary builds.
+
 ---
 
 ## 🧰 Tech Stack
@@ -91,30 +116,6 @@ lib/
 ├── services/        # API Communication Layer (Repository Pattern)
 └── utils/           # Shared Helpers (Formatters, Dialogs)
 ```
-
----
-
-## 💡 Key Challenges & Solutions
-
-### 1. High-Resolution Image Lag
-- **Challenge**: Loading hundreds of product images (4MB+ each) in a `GridView` caused significant frame drops and memory spikes on mid-range devices.  
-- **Solution**: Implemented `CachedNetworkImage` with specific `memCacheWidth` parameters. This forces the engine to decode images into smaller thumbnails in RAM, reducing memory usage by **~90%** and achieving 60 FPS scrolling.
-
-### 2. Complex Cart State Synchronization
-- **Challenge**: Managing cart updates (add, remove, update quantity, notes) across multiple screens caused data inconsistency.  
-- **Solution**: Leveraged **Riverpod's Immutable State** pattern (`CartState`). Every update recreates the state object, ensuring UI rebuilds are predictable and eliminating "ghost items" in the cart.
-
-### 3. Efficient Configuration Persistence
-- **Challenge**: Storing lightweight settings (Tax Rate, Takeaway Charges) in the database requires unnecessary schema changes, while keeping them in Riverpod state causes data loss on restart.  
-- **Solution**: Implemented a **Local-First Strategy** using `SharedPreferences`. Settings are persisted locally on the device, ensuring they survive app restarts without bloating the backend database.
-
-### 4. Secure Authentication Persistence
-- **Challenge**: Storing sensitive JWT tokens in `SharedPreferences` is insecure and prone to leaks.  
-- **Solution**: Integrated **Flutter Secure Storage** to encrypt tokens in the device's Keystore/Keychain. Coupled with **Dio Interceptors**, the app silently refreshes tokens without user intervention, balancing security with UX.
-
-### 5. Live Search Performance
-- **Challenge**: Searching through thousands of transaction records caused API spam and UI freezing.  
-- **Solution**: Implemented **Debouncing** (500ms) on the search input and optimized State Notifiers to only redraw the list when necessary, preventing unnecessary builds.
 
 ---
 
