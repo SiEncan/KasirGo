@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir_go/providers/setting_provider.dart';
+import 'package:kasir_go/utils/dialog_helper.dart';
+import 'package:kasir_go/utils/snackbar_helper.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:kasir_go/screen/settings/components/settings_header.dart';
 import 'package:kasir_go/screen/settings/components/settings_section.dart';
@@ -69,46 +71,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         );
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pengaturan berhasil disimpan'),
-          backgroundColor: Colors.green,
-        ),
+      showSuccessSnackBar(
+        context,
+        'Pengaturan berhasil disimpan',
       );
     }
   }
 
   Future<void> _resetDefault() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Reset Default'),
-        content: const Text(
-            'Apakah Anda yakin ingin mengembalikan pengaturan ke awal?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Batal')),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Reset', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
+    final confirm = await showConfirmDialog(
+      context,
+      message: 'Apakah Anda yakin ingin mengembalikan pengaturan ke awal?',
+      title: 'Reset Default',
     );
 
     if (confirm == true) {
       await ref.read(settingProvider.notifier).resetToDefault();
       if (mounted) {
-        // Re-init controllers with new state
         final settings = ref.read(settingProvider);
         setState(() {
           _initializeControllers(settings);
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pengaturan dikembalikan ke default')),
+        showSuccessSnackBar(
+          context,
+          'Pengaturan dikembalikan ke default',
         );
       }
     }
