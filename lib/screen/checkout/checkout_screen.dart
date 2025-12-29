@@ -36,14 +36,22 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     }
   }
 
-  void _showSuccessDialog({double? total, double? paid, double? change}) {
+  void _showSuccessDialog({
+    String? trxId,
+    double? total,
+    double? paid,
+    double? change,
+    String? paymentMethod,
+  }) {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => PaymentSuccessDialog(
-        total: total,
+        trxId: trxId,
         paid: paid,
         change: change,
+        total: total,
+        paymentMethod: paymentMethod ?? 'Cash',
       ),
     );
   }
@@ -157,7 +165,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         if (paymentResult == true) {
           if (mounted) {
             _showSuccessDialog(
-                total: total, paid: paidAmount, change: changeAmount);
+                total: total,
+                paid: paidAmount,
+                change: changeAmount,
+                paymentMethod: selectedPaymentMethod);
           }
         }
       } else {
@@ -172,7 +183,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     } else {
       if (mounted) {
         _showSuccessDialog(
-            total: total, paid: paidAmount, change: changeAmount);
+            trxId: transaction['transaction_number'],
+            total: total,
+            paid: paidAmount,
+            change: changeAmount,
+            paymentMethod: selectedPaymentMethod);
       }
     }
   }
