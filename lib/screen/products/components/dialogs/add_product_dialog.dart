@@ -31,6 +31,7 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
   int _productCost = 0;
   int _productStock = 0;
   bool _productIsAvailable = true;
+  bool _needsPreparation = true;
   String _productSKU = '';
   late String _productCategory;
 
@@ -356,16 +357,6 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
                                 ),
                               ),
                             ),
-                            Switch(
-                              value: _productIsAvailable,
-                              onChanged: (value) {
-                                setState(() {
-                                  _productIsAvailable = value;
-                                });
-                              },
-                              activeThumbColor: Colors.green.shade700,
-                            ),
-                            const SizedBox(width: 8),
                             Text(
                               _productIsAvailable ? "Available" : "Unavailable",
                               style: TextStyle(
@@ -375,6 +366,83 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
                                     : Colors.red.shade700,
                                 fontSize: 14,
                               ),
+                            ),
+                            const SizedBox(width: 8),
+                            Switch(
+                              value: _productIsAvailable,
+                              onChanged: (value) {
+                                setState(() {
+                                  _productIsAvailable = value;
+                                });
+                              },
+                              activeThumbColor: Colors.green.shade700,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _needsPreparation
+                              ? Colors.blue.shade50
+                              : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: _needsPreparation
+                                ? Colors.blue.shade200
+                                : Colors.grey.shade300,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.soup_kitchen,
+                              color: _needsPreparation
+                                  ? Colors.blue.shade700
+                                  : Colors.grey.shade600,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Requires Preparation",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: _needsPreparation
+                                          ? Colors.blue.shade900
+                                          : Colors.grey.shade800,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  Text(
+                                    _needsPreparation
+                                        ? "Order will be sent to Kitchen Display"
+                                        : "Direct fulfillment (Skip Kitchen)",
+                                    style: TextStyle(
+                                      color: _needsPreparation
+                                          ? Colors.blue.shade600
+                                          : Colors.grey.shade600,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Switch(
+                              value: _needsPreparation,
+                              onChanged: (value) {
+                                setState(() {
+                                  _needsPreparation = value;
+                                });
+                              },
+                              activeThumbColor: Colors.blue.shade700,
+                              activeTrackColor: Colors.blue.shade200,
                             ),
                           ],
                         ),
@@ -460,6 +528,7 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
                                 "stock": _productStock,
                                 "image": _pickedImage,
                                 "is_available": _productIsAvailable,
+                                "needs_preparation": _needsPreparation,
                                 "sku": _productSKU,
                                 "category": _productCategory,
                               };

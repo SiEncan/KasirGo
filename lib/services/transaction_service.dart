@@ -21,7 +21,7 @@ class TransactionService {
   }
 
   Future<Map<String, dynamic>> getTransactions(
-      {int page = 1, int pageSize = 10, String? search}) async {
+      {int page = 1, int pageSize = 10, String? search, String? status}) async {
     try {
       final Map<String, dynamic> queryParams = {
         'page': page,
@@ -29,6 +29,9 @@ class TransactionService {
       };
       if (search != null && search.isNotEmpty) {
         queryParams['search'] = search;
+      }
+      if (status != null && status.isNotEmpty) {
+        queryParams['status'] = status;
       }
 
       final response = await dioClient.dio.get(

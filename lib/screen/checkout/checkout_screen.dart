@@ -94,11 +94,21 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       };
     }).toList();
 
+    // 1.5 Smart KDS Logic
+    bool needsKitchen =
+        cartItems.any((item) => item.product['needs_preparation'] == true);
+
+    // Status Logic
+    String initialStatus = 'pending';
+    if (selectedPaymentMethod == 'Cash') {
+      initialStatus = needsKitchen ? 'processing' : 'completed';
+    }
+
     final transactionPayload = {
       "customer_name": customerName.isNotEmpty ? customerName : "Guest",
       "order_type": selectedOrderType == 'Dine In' ? "dine_in" : "take_away",
       "payment_method": selectedPaymentMethod.toLowerCase(),
-      "status": selectedPaymentMethod == 'Cash' ? 'completed' : 'pending',
+      "status": initialStatus,
       "paid_amount": paidAmount,
       "subtotal": subtotal,
       "tax_percentage": settings.taxRate,
@@ -115,7 +125,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
+      builder: (_) => Center(
+          child: CircularProgressIndicator(color: Colors.orange.shade600)),
     );
 
     final transaction = await ref

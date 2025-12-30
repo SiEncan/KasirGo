@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'dart:async';
 import '../services/transaction_service.dart';
 import 'category_provider.dart';
 
@@ -26,6 +28,10 @@ class TransactionState {
   // Search State
   final String searchQuery;
 
+  // Kitchen State
+  final List<Map<String, dynamic>> kitchenTransactions;
+  final bool isLoadingKitchen;
+
   TransactionState({
     this.isLoading = false,
     this.currentTransaction,
@@ -38,6 +44,10 @@ class TransactionState {
     this.selectedTransaction,
     this.isLoadingDetail = false,
     this.searchQuery = '',
+
+    // Kitchen State
+    this.kitchenTransactions = const [],
+    this.isLoadingKitchen = false,
   });
 
   TransactionState copyWith({
@@ -52,6 +62,10 @@ class TransactionState {
     Map<String, dynamic>? selectedTransaction,
     bool? isLoadingDetail,
     String? searchQuery,
+
+    // Kitchen State
+    List<Map<String, dynamic>>? kitchenTransactions,
+    bool? isLoadingKitchen,
   }) {
     return TransactionState(
       isLoading: isLoading ?? this.isLoading,
@@ -65,6 +79,10 @@ class TransactionState {
       selectedTransaction: selectedTransaction ?? this.selectedTransaction,
       isLoadingDetail: isLoadingDetail ?? this.isLoadingDetail,
       searchQuery: searchQuery ?? this.searchQuery,
+
+      // Kitchen State
+      kitchenTransactions: kitchenTransactions ?? this.kitchenTransactions,
+      isLoadingKitchen: isLoadingKitchen ?? this.isLoadingKitchen,
     );
   }
 }
@@ -151,6 +169,16 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
         isSuccess: true,
         currentTransaction: result['data'],
       );
+
+      // Trigger KDS Update
+      try {
+        FirebaseDatabase.instance
+            .ref('store_1/kitchen_trigger')
+            .set(ServerValue.timestamp);
+      } catch (e) {
+        print("Firebase Trigger Error: $e");
+      }
+
       return result['data'];
     } catch (e) {
       state = state.copyWith(
@@ -223,6 +251,13 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
             : state.selectedTransaction,
       );
 
+      try {
+        FirebaseDatabase.instance
+            .ref('store_1/kitchen_trigger')
+            .set(ServerValue.timestamp);
+      } catch (e) {
+        print("Firebase Trigger Error: $e");
+      }
       return true;
     } catch (e) {
       state = state.copyWith(errorMessage: e.toString());
@@ -232,6 +267,55 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
 
   void reset() {
     state = TransactionState();
+  }
+
+  // Kitchen - Firebase Listener
+  StreamSubscription<DatabaseEvent>? _kitchenSubscription;
+
+  void startListeningToKitchenUpdates() {
+    if (_kitchenSubscription != null) return;
+
+    try {
+      final ref = FirebaseDatabase.instance.ref('store_1/kitchen_trigger');
+      _kitchenSubscription = ref.onValue.listen((event) {
+        fetchKitchenTransactions();
+      });
+    } catch (e) {
+      // Fallback if Firebase not configured
+      print("Firebase Listener Error: $e");
+    }
+  }
+
+  void stopListeningToKitchenUpdates() {
+    _kitchenSubscription?.cancel();
+    _kitchenSubscription = null;
+  }
+
+  @override
+  void dispose() {
+    _kitchenSubscription?.cancel();
+    super.dispose();
+  }
+
+  // Kitchen Fetch
+  Future<void> fetchKitchenTransactions() async {
+    state = state.copyWith(isLoadingKitchen: true);
+    try {
+      final result =
+          await _service.getTransactions(status: 'pending', pageSize: 50);
+      final List<Map<String, dynamic>> newTransactions =
+          List<Map<String, dynamic>>.from(result['data'] ?? []);
+
+      state = state.copyWith(
+        isLoadingKitchen: false,
+        kitchenTransactions: newTransactions,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoadingKitchen: false,
+        errorMessage: e.toString(),
+      );
+    }
   }
 }
 

@@ -34,6 +34,7 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
   late final TextEditingController stockController;
 
   late bool _productIsAvailable;
+  late bool _needsPreparation;
   late String _productCategory;
 
   @override
@@ -50,6 +51,7 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
     stockController =
         TextEditingController(text: widget.product['stock'].toString());
     _productIsAvailable = widget.product['is_available'] ?? true;
+    _needsPreparation = widget.product['needs_preparation'] ?? true;
     _productCategory = widget.product['category']?.toString() ?? '';
   }
 
@@ -396,16 +398,6 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
                                 ),
                               ),
                             ),
-                            Switch(
-                              value: _productIsAvailable,
-                              onChanged: (value) {
-                                setState(() {
-                                  _productIsAvailable = value;
-                                });
-                              },
-                              activeThumbColor: Colors.green.shade700,
-                            ),
-                            const SizedBox(width: 8),
                             Text(
                               _productIsAvailable ? "Available" : "Unavailable",
                               style: TextStyle(
@@ -415,6 +407,83 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
                                     : Colors.red.shade700,
                                 fontSize: 14,
                               ),
+                            ),
+                            const SizedBox(width: 8),
+                            Switch(
+                              value: _productIsAvailable,
+                              onChanged: (value) {
+                                setState(() {
+                                  _productIsAvailable = value;
+                                });
+                              },
+                              activeThumbColor: Colors.green.shade700,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _needsPreparation
+                              ? Colors.blue.shade50
+                              : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: _needsPreparation
+                                ? Colors.blue.shade200
+                                : Colors.grey.shade300,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.soup_kitchen,
+                              color: _needsPreparation
+                                  ? Colors.blue.shade700
+                                  : Colors.grey.shade600,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Requires Preparation",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: _needsPreparation
+                                          ? Colors.blue.shade900
+                                          : Colors.grey.shade800,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  Text(
+                                    _needsPreparation
+                                        ? "Order will be sent to Kitchen Display"
+                                        : "Direct fulfillment (Skip Kitchen)",
+                                    style: TextStyle(
+                                      color: _needsPreparation
+                                          ? Colors.blue.shade600
+                                          : Colors.grey.shade600,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Switch(
+                              value: _needsPreparation,
+                              onChanged: (value) {
+                                setState(() {
+                                  _needsPreparation = value;
+                                });
+                              },
+                              activeThumbColor: Colors.blue.shade700,
+                              activeTrackColor: Colors.blue.shade200,
                             ),
                           ],
                         ),
@@ -508,6 +577,7 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
                                 "stock": stock,
                                 "image": _pickedImage,
                                 "is_available": _productIsAvailable,
+                                "needs_preparation": _needsPreparation,
                                 "sku": skuController.text,
                                 "category": _productCategory,
                               };

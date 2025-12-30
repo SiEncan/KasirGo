@@ -147,7 +147,7 @@ class TransactionDetailView extends ConsumerWidget {
         Row(
           children: [
             Text(
-              'No. Order',
+              'Transaction No.',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w300,

@@ -27,6 +27,8 @@ class ProductService {
         'stock': productData['stock'].toString(),
         'sku': productData['sku'],
         'category': productData['category'].toString(),
+        'needs_preparation':
+            productData['needs_preparation'] ? 'true' : 'false',
         'is_available': productData['is_available'] ? 'true' : 'false',
       });
 
@@ -46,7 +48,8 @@ class ProductService {
     }
   }
 
-  Future<void> editProduct(int productId, Map<String, dynamic> productData) async {
+  Future<void> editProduct(
+      int productId, Map<String, dynamic> productData) async {
     try {
       final formData = FormData.fromMap({
         'name': productData['name'],
@@ -56,6 +59,8 @@ class ProductService {
         'stock': productData['stock'].toString(),
         'sku': productData['sku'],
         'category': productData['category'].toString(),
+        'needs_preparation':
+            productData['needs_preparation'] ? 'true' : 'false',
         'is_available': productData['is_available'] ? 'true' : 'false',
       });
 
