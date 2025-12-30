@@ -6,8 +6,8 @@ import 'auth_service.dart';
 
 class DioClient {
   // static const String baseUrl = "https://kasir-go-backend.vercel.app/api";
-  static const String baseUrl = "http://10.0.2.2:8000/api";
-  // static const String baseUrl = "http://localhost:8000/api";
+  // static const String baseUrl = "http://10.0.2.2:8000/api";
+  static const String baseUrl = "http://localhost:8000/api";
 
   final Dio _dio;
   final TokenStorage tokenStorage;

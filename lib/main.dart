@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kasir_go/screen/login_screen.dart';
+import 'package:kasir_go/screen/kitchen/kitchen_screen.dart';
 import 'package:kasir_go/utils/token_storage.dart';
+import 'package:kasir_go/providers/app_mode_provider.dart';
+import 'package:kasir_go/screen/mode_selection_screen.dart';
 
 import 'screen/pos_screen.dart';
 
-void main() {
+import 'package:firebase_core/firebase_core.dart';
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint('Firebase initialization failed: $e');
+  }
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -22,19 +32,21 @@ class MyApp extends StatelessWidget {
       routes: {
         '/login': (_) => const LoginScreen(),
         '/pos': (_) => const POSScreen(),
+        '/kitchen': (_) => const KitchenScreen(),
+        '/mode_selection': (_) => const ModeSelectionScreen(),
       },
     );
   }
 }
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen> {
   final tokenStorage = TokenStorage();
 
   @override
@@ -48,10 +60,23 @@ class _SplashScreenState extends State<SplashScreen> {
 
     if (!mounted) return;
 
-    // Navigasi ke home atau login
     if (token != null) {
-      Navigator.pushReplacementNamed(context, '/pos');
+      // Token valid, check mode
+      await ref.read(appModeProvider.notifier).loadSavedMode();
+      final savedMode = ref.read(appModeProvider);
+
+      if (!mounted) return;
+
+      if (savedMode == AppMode.pos) {
+        Navigator.pushReplacementNamed(context, '/pos');
+      } else if (savedMode == AppMode.kitchen) {
+        Navigator.pushReplacementNamed(context, '/kitchen');
+      } else {
+        // Logged in but no mode selected yet
+        Navigator.pushReplacementNamed(context, '/mode_selection');
+      }
     } else {
+      // Not logged in
       Navigator.pushReplacementNamed(context, '/login');
     }
   }

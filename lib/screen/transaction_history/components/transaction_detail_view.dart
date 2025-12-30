@@ -82,7 +82,7 @@ class TransactionDetailView extends ConsumerWidget {
     DateTime? date;
     if (dateString != null) {
       try {
-        date = DateTime.parse(dateString);
+        date = DateTime.parse(dateString).toLocal();
       } catch (_) {}
     }
     final formattedDate =

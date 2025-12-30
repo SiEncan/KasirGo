@@ -9,6 +9,7 @@ import 'package:kasir_go/screen/settings/components/settings_section.dart';
 import 'package:kasir_go/screen/settings/components/settings_text_field.dart';
 import 'package:kasir_go/screen/settings/components/calculation_preview.dart';
 import 'package:kasir_go/screen/settings/components/settings_action_buttons.dart';
+import 'package:kasir_go/providers/app_mode_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -134,33 +135,90 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Left Column: Informasi Toko
+                        // Left Column: General & Informasi Toko
                         Expanded(
-                          child: SettingsSection(
-                            title: "Informasi Toko",
-                            subtitle: "Detail toko yang tampil di struk",
-                            icon: LucideIcons.store,
-                            iconColor: Colors.orange.shade800,
-                            iconBgColor: Colors.orange.shade50,
+                          child: Column(
                             children: [
-                              SettingsTextField(
-                                  label: "Nama Toko",
-                                  controller: _storeNameController),
-                              const SizedBox(height: 16),
-                              SettingsTextField(
-                                  label: "Alamat Toko",
-                                  controller: _storeAddressController),
-                              const SizedBox(height: 16),
-                              SettingsTextField(
-                                label: "No. Telepon",
-                                controller: _storePhoneController,
-                                keyboardType: TextInputType.phone,
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border:
+                                      Border.all(color: Colors.grey.shade200),
+                                ),
+                                padding: const EdgeInsets.all(8),
+                                child: Column(
+                                  children: [
+                                    ListTile(
+                                      leading: Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: Colors.blue.shade50,
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: Icon(LucideIcons.arrowLeftRight,
+                                            color: Colors.blue.shade600,
+                                            size: 20),
+                                      ),
+                                      title: const Text("Ganti Mode Aplikasi",
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w500)),
+                                      subtitle: const Text(
+                                          "Pindah antara Kasir (POS) dan Kitchen (KDS)"),
+                                      trailing: const Icon(
+                                          LucideIcons.chevronRight,
+                                          size: 16),
+                                      onTap: () async {
+                                        final confirm = await showConfirmDialog(
+                                            context,
+                                            message:
+                                                "Aplikasi akan restart ke menu pemilihan mode. Lanjutkan?",
+                                            title: "Ganti Mode");
+                                        if (confirm == true) {
+                                          await ref
+                                              .read(appModeProvider.notifier)
+                                              .clearMode();
+                                          if (context.mounted) {
+                                            Navigator.of(context)
+                                                .pushNamedAndRemoveUntil(
+                                                    '/mode_selection',
+                                                    (route) => false);
+                                          }
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                ),
                               ),
-                              const SizedBox(height: 16),
-                              SettingsTextField(
-                                label: "Footer Struk",
-                                controller: _footerController,
-                                maxLines: 3,
+                              const SizedBox(height: 24),
+                              SettingsSection(
+                                title: "Informasi Toko",
+                                subtitle: "Detail toko yang tampil di struk",
+                                icon: LucideIcons.store,
+                                iconColor: Colors.orange.shade800,
+                                iconBgColor: Colors.orange.shade50,
+                                children: [
+                                  SettingsTextField(
+                                      label: "Nama Toko",
+                                      controller: _storeNameController),
+                                  const SizedBox(height: 16),
+                                  SettingsTextField(
+                                      label: "Alamat Toko",
+                                      controller: _storeAddressController),
+                                  const SizedBox(height: 16),
+                                  SettingsTextField(
+                                    label: "No. Telepon",
+                                    controller: _storePhoneController,
+                                    keyboardType: TextInputType.phone,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  SettingsTextField(
+                                    label: "Footer Struk",
+                                    controller: _footerController,
+                                    maxLines: 3,
+                                  ),
+                                ],
                               ),
                             ],
                           ),

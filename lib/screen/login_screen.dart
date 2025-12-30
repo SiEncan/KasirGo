@@ -4,6 +4,9 @@ import 'package:iconsax/iconsax.dart';
 import 'package:kasir_go/providers/auth_provider.dart';
 import 'package:kasir_go/screen/pos_screen.dart';
 import 'package:kasir_go/utils/dialog_helper.dart';
+import 'package:kasir_go/providers/app_mode_provider.dart';
+import 'package:kasir_go/screen/kitchen/kitchen_screen.dart';
+import 'package:kasir_go/screen/mode_selection_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -297,10 +300,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 );
 
                             if (!context.mounted) return;
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const POSScreen()),
+                            await ref
+                                .read(appModeProvider.notifier)
+                                .loadSavedMode();
+                            final savedMode = ref.read(appModeProvider);
+
+                            if (!context.mounted) return;
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(builder: (_) {
+                                if (savedMode == AppMode.pos) {
+                                  return const POSScreen();
+                                } else if (savedMode == AppMode.kitchen) {
+                                  return const KitchenScreen();
+                                } else {
+                                  return const ModeSelectionScreen();
+                                }
+                              }),
                             );
                           } catch (e) {
                             if (!context.mounted) return;
