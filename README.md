@@ -85,6 +85,10 @@ KasirGo is a modern solution for small to medium retail businesses. Unlike tradi
 - **Challenge**: Searching through thousands of transaction records caused API spam and UI freezing.  
 - **Solution**: Implemented **Debouncing** (500ms) on the search input and optimized State Notifiers to only redraw the list when necessary, preventing unnecessary builds.
 
+### 6. KDS Data Integrity vs Real-Time Sync
+- **Challenge**: Syncing full order data to a NoSQL cloud (Firebase) creates a **"Double Data"** problem where the Cloud state might mismatch the SQL state (e.g., "Ghost Orders" that persist in KDS after being voided in POS due to network failure).
+- **Solution**: Rejected full-data sync in favor of a **Hybrid Signal Architecture**. Firebase is used *strictly* as a trigger ("Ding!"). When triggered, KDS fetches the payload directly from the Django SQL database. This guarantees **Single Source of Truth** and 100% data consistency, eliminating sync bugs.
+
 ---
 
 ## 🍳 Kitchen Display System (KDS) & Hybrid Architecture
