@@ -30,15 +30,25 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen> {
     });
   }
 
-  void _startListening() {
+  void _startListening() async {
     try {
-      final dbRef = FirebaseDatabase.instance.ref('store_1/kitchen_trigger');
+      final tokenStorage = ref.read(tokenStorageProvider);
+      final cafeId = await tokenStorage.getCafeId();
+
+      if (cafeId == null) {
+        debugPrint('[KDS] Failed to start listener: No Cafe ID found');
+        return;
+      }
+
+      final dbRef =
+          FirebaseDatabase.instance.ref('store_$cafeId/kitchen_trigger');
       _kitchenSubscription = dbRef.onValue.listen((event) {
         // Safe to call ref.read here as long as widget is mounted
         if (mounted) {
           ref.read(transactionProvider.notifier).fetchKitchenTransactions();
         }
       });
+      debugPrint('[KDS] Listening to store_$cafeId/kitchen_trigger');
     } catch (e) {
       debugPrint('[KDS] Firebase Listener Error: $e');
     }
@@ -129,7 +139,11 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen> {
         ],
       ),
       body: state.isLoadingKitchen && orders.isEmpty
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: CircularProgressIndicator(
+                color: Colors.orange.shade600,
+              ),
+            )
           : orders.isEmpty
               ? Center(
                   child: Column(

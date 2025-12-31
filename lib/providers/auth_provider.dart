@@ -37,6 +37,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final result = await _service.login(username, password);
       await tokenStorage.saveTokens(result['access'], result['refresh']);
+
+      // Fetch profile to get Cafe ID
+      final userId = await _service.getUserId();
+      if (userId != null) {
+        final profile = await _service.getProfile(userId);
+        if (profile['cafe_id'] != null) {
+          await tokenStorage.saveCafeId(profile['cafe_id']);
+        }
+      }
     } finally {
       state = AuthState(isLoading: false);
     }

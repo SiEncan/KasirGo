@@ -4,6 +4,8 @@ import 'package:firebase_database/firebase_database.dart';
 import 'dart:async';
 import '../services/transaction_service.dart';
 import 'category_provider.dart';
+import '../utils/token_storage.dart';
+import 'auth_provider.dart';
 
 final transactionServiceProvider = Provider<TransactionService>((ref) {
   final dioClient = ref.read(dioClientProvider);
@@ -90,8 +92,10 @@ class TransactionState {
 
 class TransactionNotifier extends StateNotifier<TransactionState> {
   final TransactionService _service;
+  final TokenStorage _tokenStorage;
 
-  TransactionNotifier(this._service) : super(TransactionState());
+  TransactionNotifier(this._service, this._tokenStorage)
+      : super(TransactionState());
 
   void selectTransaction(int id) {
     try {
@@ -173,9 +177,12 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
 
       // Trigger KDS Update
       try {
-        FirebaseDatabase.instance
-            .ref('store_1/kitchen_trigger')
-            .set(ServerValue.timestamp);
+        final cafeId = await _tokenStorage.getCafeId();
+        if (cafeId != null) {
+          FirebaseDatabase.instance
+              .ref('store_$cafeId/kitchen_trigger')
+              .set(ServerValue.timestamp);
+        }
       } catch (e) {
         debugPrint('[POS] Failed to send KDS trigger: $e');
       }
@@ -253,9 +260,12 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
       );
 
       try {
-        FirebaseDatabase.instance
-            .ref('store_1/kitchen_trigger')
-            .set(ServerValue.timestamp);
+        final cafeId = await _tokenStorage.getCafeId();
+        if (cafeId != null) {
+          FirebaseDatabase.instance
+              .ref('store_$cafeId/kitchen_trigger')
+              .set(ServerValue.timestamp);
+        }
       } catch (e) {
         debugPrint('[POS] Failed to send KDS trigger: $e');
       }
@@ -295,5 +305,6 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
 final transactionProvider =
     StateNotifierProvider<TransactionNotifier, TransactionState>((ref) {
   final service = ref.read(transactionServiceProvider);
-  return TransactionNotifier(service);
+  final tokenStorage = ref.read(tokenStorageProvider);
+  return TransactionNotifier(service, tokenStorage);
 });

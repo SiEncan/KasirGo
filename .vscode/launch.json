@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "kasirgo (Flutter)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "env": {
+        "PUB_CACHE": "F:\\flutter_pub_cache"
+      }
+    }
+  ]
+}
