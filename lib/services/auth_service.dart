@@ -8,9 +8,9 @@ import '../utils/token_storage.dart';
 import 'dio_client.dart';
 
 class AuthService {
-  // final String baseUrl = "https://kasir-go-backend.vercel.app/api";
+  final String baseUrl = "https://kasir-go-backend.vercel.app/api";
   // final String baseUrl = "http://10.0.2.2:8000/api";
-  final String baseUrl = "http://localhost:8000/api";
+  // final String baseUrl = "http://localhost:8000/api";
   final TokenStorage tokenStorage;
   DioClient? dioClient;
 

@@ -148,11 +148,8 @@ class KitchenOrderCard extends ConsumerWidget {
                     }
                   } catch (e) {
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text('Failed: $e'),
-                            backgroundColor: Colors.red),
-                      );
+                      showErrorSnackBar(context, e.toString(),
+                          title: 'Failed to mark order as served');
                     }
                   }
                 },

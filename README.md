@@ -87,6 +87,53 @@ KasirGo is a modern solution for small to medium retail businesses. Unlike tradi
 
 ---
 
+## 🍳 Kitchen Display System (KDS) & Hybrid Architecture
+
+KasirGo features a **Real-Time Kitchen Display System** that syncs with the POS without complex server infrastructure.
+
+### 📡 Hybrid Architecture (Signal + Fetch)
+Instead of syncing complex order data to Firebase (which creates data integrity risks), we use a **Hybrid Approach**. Here is the step-by-step flow:
+
+1.  **[KDS]**: When the Kitchen App opens, it connects to Firebase and starts *listening* for signals at `store_1/kitchen_trigger`.
+2.  **[POS]**: Cashier completes a transaction. The app saves the full order details to the **Django SQL Database** (Authoritative Source).
+3.  **[POS]**: Once saved, the app sends a lightweight *Timestamp Signal* to Firebase.
+4.  **[Firebase]**: Instantly broadcasts this signal to all listening devices (WebSocket).
+5.  **[KDS]**: Receives the signal ("Ding!").
+6.  **[KDS]**: Reacts by asking Django: *"Hey, give me the latest open orders!"* (Fetch API).
+7.  **[KDS]**: Updates the screen with the verified data from Django.
+
+**Benefit:** 100% Data Integrity. Zero chance of "Ghost Orders" or data mismatch, with Real-Time experience.
+
+### 🛠️ Firebase Setup (Optional for Real-Time)
+The KDS works in **Manual Refresh Mode** by default. To enable **Real-Time Automatic Updates**, you must configure Firebase:
+
+1.  **Add Configuration File**: 
+    -   Place `google-services.json` in `android/app/`.
+    -   *Note: This file is git-ignored for security.*
+    
+2.  **Security Rules (No Auth Required)**:
+    -   We use **Structure Validation** to secure the DB without needing Firebase Auth.
+    -   Copy this to your Firebase Console Rules:
+    ```json
+    {
+      "rules": {
+        "store_1": {
+          "kitchen_trigger": {
+            ".read": true,
+            ".write": "newData.isNumber()" 
+          }
+        }
+      }
+    }
+    ```
+
+### 👨‍🍳 Smart Features
+-   **Startup Mode Selection**: Choose between **POS Role** or **Kitchen Role** at login. Selection is remembered permanently until you switch it.
+-   **Smart Routing**: Only items marked "Needs Preparation" are sent to KDS. Grab & Go items (like bottled water) skip the kitchen.
+-   **Queue Management**: FIFO (First-In-First-Out) display for chefs.
+
+---
+
 ## 🧰 Tech Stack
 
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)

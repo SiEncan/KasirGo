@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'dart:async';
@@ -176,10 +177,7 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
             .ref('store_1/kitchen_trigger')
             .set(ServerValue.timestamp);
       } catch (e) {
-        state = state.copyWith(
-          isLoading: false,
-          errorMessage: e.toString(),
-        );
+        debugPrint('[POS] Failed to send KDS trigger: $e');
       }
 
       return result['data'];
@@ -259,7 +257,7 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
             .ref('store_1/kitchen_trigger')
             .set(ServerValue.timestamp);
       } catch (e) {
-        state = state.copyWith(errorMessage: e.toString());
+        debugPrint('[POS] Failed to send KDS trigger: $e');
       }
       return true;
     } catch (e) {
