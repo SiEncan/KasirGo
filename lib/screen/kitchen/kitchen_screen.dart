@@ -115,10 +115,27 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen> {
     });
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('👨‍🍳 Kitchen Display System',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                LucideIcons.chefHat,
+                color: Colors.orange.shade600,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Text(' Kitchen Display System',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: Colors.black,
@@ -252,6 +269,7 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen> {
                   ),
                 )
               : RefreshIndicator(
+                  color: Colors.orange.shade600,
                   onRefresh: () => ref
                       .read(transactionProvider.notifier)
                       .fetchKitchenTransactions(),
