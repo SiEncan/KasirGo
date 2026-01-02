@@ -288,7 +288,7 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
 
   Widget _buildItemContent(CartState item) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(top: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey.shade300),
@@ -498,7 +498,8 @@ class _OrderDetailsState extends ConsumerState<OrderDetails> {
                 ),
               ],
             ),
-            const Divider(height: 50),
+            const SizedBox(height: 20),
+            const Divider(height: 0),
             Expanded(
               child: Stack(
                 children: [

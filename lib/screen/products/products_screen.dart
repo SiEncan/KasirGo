@@ -100,6 +100,7 @@ class _ManageProductsScreenState extends ConsumerState<ManageProductsScreen> {
     }
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.white,
       body: SafeArea(
         bottom: false,

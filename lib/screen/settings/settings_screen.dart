@@ -123,165 +123,150 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       backgroundColor: Colors.grey.shade100,
       body: Column(
         children: [
-          // Header
           const SettingsHeader(),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(right: 24, left: 24, top: 24),
-              child: Column(
+              child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Main Layout: 2 Columns
-                  IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                  // Left Column: General & Informasi Toko
+                  Expanded(
+                    child: Column(
                       children: [
-                        // Left Column: General & Informasi Toko
-                        Expanded(
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          padding: const EdgeInsets.all(8),
                           child: Column(
                             children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border:
-                                      Border.all(color: Colors.grey.shade200),
-                                ),
-                                padding: const EdgeInsets.all(8),
-                                child: Column(
-                                  children: [
-                                    ListTile(
-                                      leading: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: Colors.blue.shade50,
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                        child: Icon(LucideIcons.arrowLeftRight,
-                                            color: Colors.blue.shade600,
-                                            size: 20),
-                                      ),
-                                      title: const Text("Ganti Mode Aplikasi",
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.w500)),
-                                      subtitle: const Text(
-                                          "Pindah antara Kasir (POS) dan Kitchen (KDS)"),
-                                      trailing: const Icon(
-                                          LucideIcons.chevronRight,
-                                          size: 16),
-                                      onTap: () async {
-                                        final confirm = await showConfirmDialog(
-                                            context,
-                                            message:
-                                                "Aplikasi akan restart ke menu pemilihan mode. Lanjutkan?",
-                                            title: "Ganti Mode");
-                                        if (confirm == true) {
-                                          await ref
-                                              .read(appModeProvider.notifier)
-                                              .clearMode();
-                                          if (context.mounted) {
-                                            Navigator.of(context)
-                                                .pushNamedAndRemoveUntil(
-                                                    '/mode_selection',
-                                                    (route) => false);
-                                          }
-                                        }
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              SettingsSection(
-                                title: "Informasi Toko",
-                                subtitle: "Detail toko yang tampil di struk",
-                                icon: LucideIcons.store,
-                                iconColor: Colors.orange.shade800,
-                                iconBgColor: Colors.orange.shade50,
-                                children: [
-                                  SettingsTextField(
-                                      label: "Nama Toko",
-                                      controller: _storeNameController),
-                                  const SizedBox(height: 16),
-                                  SettingsTextField(
-                                      label: "Alamat Toko",
-                                      controller: _storeAddressController),
-                                  const SizedBox(height: 16),
-                                  SettingsTextField(
-                                    label: "No. Telepon",
-                                    controller: _storePhoneController,
-                                    keyboardType: TextInputType.phone,
+                              ListTile(
+                                leading: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.shade50,
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                  const SizedBox(height: 16),
-                                  SettingsTextField(
-                                    label: "Footer Struk",
-                                    controller: _footerController,
-                                    maxLines: 3,
-                                  ),
-                                ],
+                                  child: Icon(LucideIcons.arrowLeftRight,
+                                      color: Colors.blue.shade600, size: 20),
+                                ),
+                                title: const Text("Ganti Mode Aplikasi",
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.w500)),
+                                subtitle: const Text(
+                                    "Pindah antara Kasir (POS) dan Kitchen (KDS)"),
+                                trailing: const Icon(LucideIcons.chevronRight,
+                                    size: 16),
+                                onTap: () async {
+                                  final confirm = await showConfirmDialog(
+                                      context,
+                                      message:
+                                          "Aplikasi akan restart ke menu pemilihan mode. Lanjutkan?",
+                                      title: "Ganti Mode");
+                                  if (confirm == true) {
+                                    await ref
+                                        .read(appModeProvider.notifier)
+                                        .clearMode();
+                                    if (context.mounted) {
+                                      Navigator.of(context)
+                                          .pushNamedAndRemoveUntil(
+                                              '/mode_selection',
+                                              (route) => false);
+                                    }
+                                  }
+                                },
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 24),
-                        // Right Column: Pajak & Biaya + Preview + Tombol
-                        Expanded(
-                          child: Column(
-                            children: [
-                              SettingsSection(
-                                title: "Pajak & Biaya",
-                                subtitle: "Pengaturan pajak dan biaya tambahan",
-                                icon: LucideIcons.percent,
-                                iconColor:
-                                    const Color.fromARGB(255, 53, 223, 59),
-                                iconBgColor:
-                                    const Color.fromARGB(200, 232, 245, 233),
-                                children: [
-                                  SettingsTextField(
-                                    label: "Tax Rate (%)",
-                                    controller: _taxController,
-                                    keyboardType: TextInputType.number,
-                                    suffixText: "%",
-                                    helperText:
-                                        "Pajak akan dihitung dari subtotal pesanan",
-                                    onChanged: () => setState(() {}),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  SettingsTextField(
-                                    label: "Biaya Take Away",
-                                    controller: _takeAwayChargeController,
-                                    keyboardType: TextInputType.number,
-                                    prefixText: "Rp ",
-                                    helperText:
-                                        "Biaya tambahan untuk pesanan Take Away: Rp ${_takeAwayChargeController.text}",
-                                    onChanged: () => setState(() {}),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 24),
-                              Expanded(
-                                child: CalculationPreview(
-                                  taxController: _taxController,
-                                  takeAwayChargeController:
-                                      _takeAwayChargeController,
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              SettingsActionButtons(
-                                onReset: _resetDefault,
-                                onSave: _saveSettings,
-                              ),
-                            ],
-                          ),
+                        const SizedBox(height: 16),
+                        SettingsSection(
+                          title: "Informasi Toko",
+                          subtitle: "Detail toko yang tampil di struk",
+                          icon: LucideIcons.store,
+                          iconColor: Colors.orange.shade800,
+                          iconBgColor: Colors.orange.shade50,
+                          children: [
+                            SettingsTextField(
+                                label: "Nama Toko",
+                                controller: _storeNameController),
+                            const SizedBox(height: 16),
+                            SettingsTextField(
+                                label: "Alamat Toko",
+                                controller: _storeAddressController),
+                            const SizedBox(height: 16),
+                            SettingsTextField(
+                              label: "No. Telepon",
+                              controller: _storePhoneController,
+                              keyboardType: TextInputType.phone,
+                            ),
+                            const SizedBox(height: 16),
+                            SettingsTextField(
+                              label: "Footer Struk",
+                              controller: _footerController,
+                              maxLines: 3,
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 50),
+                  const SizedBox(width: 24),
+                  // Right Column: Pajak & Biaya + Preview + Tombol
+                  Expanded(
+                    child: Column(
+                      children: [
+                        SettingsSection(
+                          title: "Pajak & Biaya",
+                          subtitle: "Pengaturan pajak dan biaya tambahan",
+                          icon: LucideIcons.percent,
+                          iconColor: const Color.fromARGB(255, 53, 223, 59),
+                          iconBgColor: const Color.fromARGB(200, 232, 245, 233),
+                          children: [
+                            SettingsTextField(
+                              label: "Tax Rate (%)",
+                              controller: _taxController,
+                              keyboardType: TextInputType.number,
+                              suffixText: "%",
+                              helperText:
+                                  "Pajak akan dihitung dari subtotal pesanan",
+                              onChanged: () => setState(() {}),
+                            ),
+                            const SizedBox(height: 16),
+                            SettingsTextField(
+                              label: "Biaya Take Away",
+                              controller: _takeAwayChargeController,
+                              keyboardType: TextInputType.number,
+                              prefixText: "Rp ",
+                              helperText:
+                                  "Biaya tambahan untuk pesanan Take Away: Rp ${_takeAwayChargeController.text}",
+                              onChanged: () => setState(() {}),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Expanded(
+                          child: CalculationPreview(
+                            taxController: _taxController,
+                            takeAwayChargeController: _takeAwayChargeController,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        SettingsActionButtons(
+                          onReset: _resetDefault,
+                          onSave: _saveSettings,
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-          ),
+          )),
         ],
       ),
     );

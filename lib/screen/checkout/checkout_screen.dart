@@ -222,6 +222,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final total = subtotal + tax + takeAwayCharge;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.grey.shade100,
       body: SafeArea(
         bottom: false,

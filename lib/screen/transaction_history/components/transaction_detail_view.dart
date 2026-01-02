@@ -1,3 +1,4 @@
+import 'package:kasir_go/screen/transaction_history/components/edit_transaction_info_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax/iconsax.dart';
@@ -610,12 +611,16 @@ class TransactionDetailView extends ConsumerWidget {
                     onPressed: state.isLoading
                         ? null
                         : () async {
-                            final changes = await showEditTransactionDialog(
-                              context,
-                              currentCustomerName:
-                                  customer == '-' ? '' : customer,
-                              currentNotes: notes,
-                            );
+                            final changes =
+                                await showDialog<Map<String, dynamic>>(
+                                    context: context,
+                                    builder: (context) {
+                                      return EditTransactionInfoDialog(
+                                        currentCustomerName:
+                                            customer == '-' ? '' : customer,
+                                        currentNotes: notes,
+                                      );
+                                    });
 
                             if (changes != null && context.mounted) {
                               final success = await ref
