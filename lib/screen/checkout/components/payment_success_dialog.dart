@@ -10,6 +10,7 @@ class PaymentSuccessDialog extends ConsumerWidget {
   final double? paid;
   final double? change;
   final String paymentMethod;
+  final bool isKdsError;
 
   const PaymentSuccessDialog({
     super.key,
@@ -18,6 +19,7 @@ class PaymentSuccessDialog extends ConsumerWidget {
     this.paid,
     this.change,
     this.paymentMethod = 'Cash',
+    this.isKdsError = false,
   });
 
   @override
@@ -65,6 +67,43 @@ class PaymentSuccessDialog extends ConsumerWidget {
               ),
               textAlign: TextAlign.center,
             ),
+            if (isKdsError)
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.red.shade100, width: 2),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(LucideIcons.triangleAlert,
+                            color: Colors.red, size: 24),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            "GAGAL KIRIM KE DAPUR!",
+                            style: TextStyle(
+                                color: Colors.red.shade600,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Pesanan tidak masuk otomatis.\nHarap minta bagian Dapur untuk menekan tombol Refresh sekarang.",
+                      style:
+                          TextStyle(color: Colors.red.shade600, fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
             const SizedBox(height: 24),
             Container(
               padding: const EdgeInsets.all(20),

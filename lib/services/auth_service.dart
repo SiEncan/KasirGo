@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:jwt_decode/jwt_decode.dart';
 import '../utils/app_exception.dart';
 import '../utils/token_storage.dart';
@@ -33,7 +35,19 @@ class AuthService {
           .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final data = jsonDecode(response.body);
+
+        // Hybrid Auth: Login to Firebase using Custom Token
+        try {
+          final accessToken = data['access'];
+          final payload = Jwt.parseJwt(accessToken);
+          final userId = payload['user_id'];
+          await authenticateFirebase(userId, accessToken);
+        } catch (e) {
+          debugPrint("Firebase Login Warning: $e");
+        }
+
+        return data;
       } else {
         try {
           final errorJson = jsonDecode(response.body);
@@ -144,6 +158,30 @@ class AuthService {
       );
     } on DioException catch (e) {
       throw _handleError(e, 'Failed to change password');
+    }
+  }
+
+  /// Get Custom Token from Backend and sign in to Firebase
+  Future<void> authenticateFirebase(String userId, String accessToken) async {
+    final url = Uri.parse("$baseUrl/auth/firebase-token/");
+
+    final response = await http.post(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $accessToken"
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final String customToken = data['token'];
+
+      await FirebaseAuth.instance.signInWithCustomToken(customToken);
+      debugPrint("Firebase Custom Auth Success: User $userId");
+    } else {
+      // We log warning but don't crash standard login if Firebase fails
+      debugPrint("Firebase Token Failed: ${response.body}");
     }
   }
 

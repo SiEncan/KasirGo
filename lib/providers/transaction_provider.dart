@@ -180,18 +180,24 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
       );
 
       // Trigger KDS Update
+      bool kdsSent = true;
       try {
         final cafeId = await _tokenStorage.getCafeId();
         if (cafeId != null) {
-          FirebaseDatabase.instance
-              .ref('store_$cafeId/kitchen_trigger')
+          await FirebaseDatabase.instance
+              .ref('stores/$cafeId/kitchen_trigger')
               .set(ServerValue.timestamp);
         }
       } catch (e) {
         debugPrint('[POS] Failed to send KDS trigger: $e');
+        kdsSent = false;
       }
 
-      return result['data'];
+      // Inject KDS status into the returned map
+      final transactionData = Map<String, dynamic>.from(result['data']);
+      transactionData['_kds_sent'] = kdsSent;
+
+      return transactionData;
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -250,7 +256,8 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
     }
   }
 
-  Future<bool> updateTransaction(int id, Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> updateTransaction(
+      int id, Map<String, dynamic> data) async {
     state =
         state.copyWith(isLoading: true, isSuccess: false, errorMessage: null);
     try {
@@ -271,20 +278,22 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
             : state.selectedTransaction,
       );
 
+      bool kdsSent = true;
       try {
         final cafeId = await _tokenStorage.getCafeId();
         if (cafeId != null) {
-          FirebaseDatabase.instance
-              .ref('store_$cafeId/kitchen_trigger')
+          await FirebaseDatabase.instance
+              .ref('stores/$cafeId/kitchen_trigger')
               .set(ServerValue.timestamp);
         }
       } catch (e) {
         debugPrint('[POS] Failed to send KDS trigger: $e');
+        kdsSent = false;
       }
-      return true;
+      return {'success': true, 'kds_sent': kdsSent};
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
-      return false;
+      return {'success': false, 'message': e.toString()};
     }
   }
 

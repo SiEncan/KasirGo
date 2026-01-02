@@ -148,7 +148,7 @@ class _KitchenOrderCardState extends ConsumerState<KitchenOrderCard> {
                           _isLoading = true;
                         });
 
-                        final success = await ref
+                        final result = await ref
                             .read(transactionProvider.notifier)
                             .updateTransaction(
                                 order['id'], {'status': 'completed'});
@@ -158,9 +158,15 @@ class _KitchenOrderCardState extends ConsumerState<KitchenOrderCard> {
                             _isLoading = false;
                           });
 
-                          if (success) {
-                            showSuccessSnackBar(
-                                context, 'Order marked as served');
+                          if (result['success'] == true) {
+                            if (result['kds_sent'] == false) {
+                              showWarningSnackBar(context,
+                                  'Served! Tapi gagal lapor Kasir/Display. Harap info manual.',
+                                  title: 'Koneksi Terputus');
+                            } else {
+                              showSuccessSnackBar(
+                                  context, 'Order marked as served');
+                            }
                             ref
                                 .read(transactionProvider.notifier)
                                 .fetchKitchenTransactions();

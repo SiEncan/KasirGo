@@ -20,6 +20,8 @@ class KitchenScreen extends ConsumerStatefulWidget {
 
 class _KitchenScreenState extends ConsumerState<KitchenScreen> {
   StreamSubscription<DatabaseEvent>? _kitchenSubscription;
+  bool _isStreamError = false;
+  bool _isConnected = false;
 
   @override
   void initState() {
@@ -43,16 +45,50 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen> {
       }
 
       final dbRef =
-          FirebaseDatabase.instance.ref('store_$cafeId/kitchen_trigger');
+          FirebaseDatabase.instance.ref('stores/$cafeId/kitchen_trigger');
       _kitchenSubscription = dbRef.onValue.listen((event) {
         // Safe to call ref.read here as long as widget is mounted
         if (mounted) {
           ref.read(transactionProvider.notifier).fetchKitchenTransactions();
         }
+      }, onError: (error) {
+        debugPrint('[KDS] Stream Error: $error');
+        if (mounted) {
+          setState(() {
+            _isStreamError = true;
+            _isConnected = false;
+          });
+          // Retry logic: Try to reconnect after 5 seconds
+          Future.delayed(const Duration(seconds: 5), () {
+            if (mounted) {
+              debugPrint('[KDS] Retrying connection...');
+              _startListening();
+            }
+          });
+        }
       });
-      debugPrint('[KDS] Listening to store_$cafeId/kitchen_trigger');
+      debugPrint('[KDS] Listening to stores/$cafeId/kitchen_trigger');
+      if (mounted) {
+        setState(() {
+          _isConnected = true;
+          _isStreamError = false;
+        });
+      }
     } catch (e) {
       debugPrint('[KDS] Firebase Listener Error: $e');
+      if (mounted) {
+        setState(() {
+          _isStreamError = true;
+          _isConnected = false;
+        });
+        // Retry logic: Try to reconnect after 5 seconds
+        Future.delayed(const Duration(seconds: 5), () {
+          if (mounted) {
+            debugPrint('[KDS] Retrying connection...');
+            _startListening();
+          }
+        });
+      }
     }
   }
 
@@ -87,6 +123,50 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen> {
         elevation: 0,
         foregroundColor: Colors.black,
         actions: [
+          // Connection Status Indicator
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: _isStreamError
+                  ? Colors.red.shade50
+                  : (_isConnected ? Colors.green.shade50 : Colors.grey.shade50),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: _isStreamError
+                    ? Colors.red.shade200
+                    : (_isConnected
+                        ? Colors.green.shade200
+                        : Colors.grey.shade300),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  _isStreamError
+                      ? LucideIcons.wifiOff
+                      : (_isConnected ? LucideIcons.wifi : LucideIcons.loader),
+                  size: 16,
+                  color: _isStreamError
+                      ? Colors.red
+                      : (_isConnected ? Colors.green : Colors.grey),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  _isStreamError
+                      ? 'OFFLINE'
+                      : (_isConnected ? 'LIVE' : 'CONNECTING'),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: _isStreamError
+                        ? Colors.red
+                        : (_isConnected ? Colors.green : Colors.grey),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
           IconButton(
             icon: const Icon(LucideIcons.refreshCw),
             tooltip: 'Refresh Orders',

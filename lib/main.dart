@@ -4,6 +4,7 @@ import 'package:kasir_go/screen/login_screen.dart';
 import 'package:kasir_go/screen/kitchen/kitchen_screen.dart';
 import 'package:kasir_go/utils/token_storage.dart';
 import 'package:kasir_go/providers/app_mode_provider.dart';
+import 'package:kasir_go/providers/auth_provider.dart';
 import 'package:kasir_go/screen/mode_selection_screen.dart';
 
 import 'screen/pos_screen.dart';
@@ -61,6 +62,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     if (!mounted) return;
 
     if (token != null) {
+      // Restore Firebase Session
+      try {
+        final authService = ref.read(authServiceProvider);
+        final userId = await authService.getUserId();
+        if (userId != null) {
+          await authService.authenticateFirebase(userId, token);
+        }
+      } catch (e) {
+        debugPrint("Firebase Restore Failed: $e");
+      }
+
       // Token valid, check mode
       await ref.read(appModeProvider.notifier).loadSavedMode();
       final savedMode = ref.read(appModeProvider);

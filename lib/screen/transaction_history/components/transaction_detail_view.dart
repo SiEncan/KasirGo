@@ -629,7 +629,7 @@ class TransactionDetailView extends ConsumerWidget {
                                       transaction['id'], changes);
 
                               if (context.mounted) {
-                                if (success) {
+                                if (success['success'] == true) {
                                   showSuccessSnackBar(context,
                                       'Transaction updated successfully');
                                 }

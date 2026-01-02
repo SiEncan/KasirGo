@@ -43,6 +43,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     double? paid,
     double? change,
     String? paymentMethod,
+    bool isKdsError = false,
   }) {
     showDialog(
       context: context,
@@ -53,6 +54,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         change: change,
         total: total,
         paymentMethod: paymentMethod ?? 'Cash',
+        isKdsError: isKdsError,
       ),
     );
   }
@@ -137,6 +139,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     if (transaction != null) {
       if (!mounted) return;
       final transactionId = transaction['id'];
+      final bool isKdsError = transaction['_kds_sent'] == false;
 
       // 3. Handle Payment
       if (selectedPaymentMethod == 'QRIS' ||
@@ -165,7 +168,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   total: total,
                   paid: paidAmount,
                   change: changeAmount,
-                  paymentMethod: selectedPaymentMethod);
+                  paymentMethod: selectedPaymentMethod,
+                  isKdsError: isKdsError);
             }
           }
         } else {
@@ -190,7 +194,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               total: total,
               paid: paidAmount,
               change: changeAmount,
-              paymentMethod: selectedPaymentMethod);
+              paymentMethod: selectedPaymentMethod,
+              isKdsError: isKdsError);
         }
       }
     } else {
