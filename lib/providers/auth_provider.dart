@@ -22,8 +22,14 @@ final authServiceProvider = Provider((ref) {
 
 class AuthState {
   final bool isLoading;
+  final String? errorMessage;
+  final bool isSuccess;
 
-  AuthState({this.isLoading = false});
+  AuthState({
+    this.isLoading = false,
+    this.errorMessage,
+    this.isSuccess = false,
+  });
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
@@ -46,8 +52,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
           await tokenStorage.saveCafeId(profile['cafe_id']);
         }
       }
-    } finally {
-      state = AuthState(isLoading: false);
+      state = AuthState(isLoading: false, isSuccess: true);
+    } catch (e) {
+      state = AuthState(isLoading: false, errorMessage: e.toString());
     }
   }
 
@@ -63,7 +70,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     String? email,
     String? phone,
   }) async {
-    state = AuthState(isLoading: true);
+    state = AuthState(isLoading: true, isSuccess: false, errorMessage: null);
     try {
       final userId = await _service.getUserId();
       if (userId == null) throw AppException.sessionExpired();
@@ -76,8 +83,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
         email: email,
         phone: phone,
       );
-    } finally {
-      state = AuthState(isLoading: false);
+      state = AuthState(isLoading: false, isSuccess: true);
+    } catch (e) {
+      state = AuthState(isLoading: false, errorMessage: e.toString());
     }
   }
 
@@ -85,7 +93,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String oldPassword,
     required String newPassword,
   }) async {
-    state = AuthState(isLoading: true);
+    state = AuthState(isLoading: true, isSuccess: false, errorMessage: null);
     try {
       final userId = await _service.getUserId();
       if (userId == null) throw AppException.sessionExpired();
@@ -95,16 +103,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
         oldPassword: oldPassword,
         newPassword: newPassword,
       );
-    } finally {
-      state = AuthState(isLoading: false);
+      state = AuthState(isLoading: false, isSuccess: true);
+    } catch (e) {
+      state = AuthState(isLoading: false, errorMessage: e.toString());
     }
   }
 
-  Future<Map<String, dynamic>> getProfile() async {
-    final userId = await _service.getUserId();
-    if (userId == null) throw AppException.sessionExpired();
+  Future<Map<String, dynamic>?> getProfile() async {
+    state = AuthState(isLoading: true, isSuccess: false, errorMessage: null);
+    try {
+      final userId = await _service.getUserId();
+      if (userId == null) throw AppException.sessionExpired();
 
-    return await _service.getProfile(userId);
+      state = AuthState(isLoading: false, isSuccess: true);
+      return await _service.getProfile(userId);
+    } catch (e) {
+      state = AuthState(isLoading: false, errorMessage: e.toString());
+      return null;
+    }
   }
 }
 

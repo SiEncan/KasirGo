@@ -12,6 +12,7 @@ class ProfileInfoCard extends StatelessWidget {
   final TextEditingController lastNameController;
   final TextEditingController emailController;
   final TextEditingController phoneController;
+  final bool isLoading;
 
   const ProfileInfoCard({
     super.key,
@@ -24,6 +25,7 @@ class ProfileInfoCard extends StatelessWidget {
     required this.lastNameController,
     required this.emailController,
     required this.phoneController,
+    this.isLoading = false,
   });
 
   @override
@@ -120,7 +122,7 @@ class ProfileInfoCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: onCancelPressed,
+                      onPressed: isLoading ? null : onCancelPressed,
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         side: BorderSide(color: Colors.grey.shade400),
@@ -138,22 +140,33 @@ class ProfileInfoCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: onSavePressed,
+                      onPressed: isLoading ? null : onSavePressed,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.deepOrange.shade400,
                         foregroundColor: Colors.white,
+                        disabledBackgroundColor: Colors.grey.shade200,
+                        disabledForegroundColor: Colors.grey,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text(
-                        'Save Changes',
-                        style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5),
-                      ),
+                      child: isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.grey,
+                              ),
+                            )
+                          : const Text(
+                              'Save Changes',
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5),
+                            ),
                     ),
                   ),
                 ],

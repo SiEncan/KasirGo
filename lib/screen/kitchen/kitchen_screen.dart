@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kasir_go/utils/session_helper.dart';
+import 'package:kasir_go/utils/snackbar_helper.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:kasir_go/providers/transaction_provider.dart';
 import 'package:kasir_go/screen/kitchen/components/kitchen_order_card.dart';
@@ -64,6 +66,17 @@ class _KitchenScreenState extends ConsumerState<KitchenScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(transactionProvider);
     final orders = state.kitchenTransactions;
+
+    ref.listen(transactionProvider, (previous, next) {
+      if (next.errorMessage != null &&
+          next.errorMessage != previous?.errorMessage) {
+        if (isSessionExpiredError(next.errorMessage)) {
+          handleSessionExpired(context, ref);
+          return;
+        }
+        showErrorSnackBar(context, next.errorMessage!);
+      }
+    });
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,

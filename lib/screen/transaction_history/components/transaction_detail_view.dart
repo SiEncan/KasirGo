@@ -68,7 +68,9 @@ class TransactionDetailView extends ConsumerWidget {
             ? 'Unpaid'
             : transaction['status'] == 'cancelled'
                 ? 'Cancelled'
-                : 'Failed';
+                : transaction['status'] == 'processing'
+                    ? 'Processing'
+                    : 'Failed';
 
     if (orderType.isNotEmpty && orderType != '-') {
       orderType = orderType
@@ -268,7 +270,9 @@ class TransactionDetailView extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: status == 'Paid'
                     ? Colors.green.shade100
-                    : Colors.red.shade100,
+                    : status == 'Processing'
+                        ? Colors.blue.shade100
+                        : Colors.red.shade100,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
@@ -278,7 +282,9 @@ class TransactionDetailView extends ConsumerWidget {
                   fontWeight: FontWeight.w700,
                   color: status == 'Paid'
                       ? Colors.green.shade500
-                      : Colors.red.shade500,
+                      : status == 'Processing'
+                          ? Colors.blue.shade500
+                          : Colors.red.shade500,
                 ),
               ),
             ),
@@ -601,38 +607,50 @@ class TransactionDetailView extends ConsumerWidget {
               children: [
                 Expanded(
                   child: TextButton.icon(
-                    onPressed: () async {
-                      final changes = await showEditTransactionDialog(
-                        context,
-                        currentCustomerName: customer == '-' ? '' : customer,
-                        currentNotes: notes,
-                      );
+                    onPressed: state.isLoading
+                        ? null
+                        : () async {
+                            final changes = await showEditTransactionDialog(
+                              context,
+                              currentCustomerName:
+                                  customer == '-' ? '' : customer,
+                              currentNotes: notes,
+                            );
 
-                      if (changes != null && context.mounted) {
-                        final success = await ref
-                            .read(transactionProvider.notifier)
-                            .updateTransaction(transaction['id'], changes);
+                            if (changes != null && context.mounted) {
+                              final success = await ref
+                                  .read(transactionProvider.notifier)
+                                  .updateTransaction(
+                                      transaction['id'], changes);
 
-                        if (context.mounted) {
-                          if (success) {
-                            showSuccessSnackBar(
-                                context, 'Transaction updated successfully');
-                          } else {
-                            showErrorSnackBar(
-                                context, 'Failed to update transaction');
-                          }
-                        }
-                      }
-                    },
-                    icon:
-                        const Icon(Iconsax.edit, color: Colors.blue, size: 18),
-                    label: const Text(
-                      "Edit Info",
+                              if (context.mounted) {
+                                if (success) {
+                                  showSuccessSnackBar(context,
+                                      'Transaction updated successfully');
+                                }
+                              }
+                            }
+                          },
+                    icon: state.isLoading
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.grey,
+                            ))
+                        : const Icon(Iconsax.edit,
+                            color: Colors.blue, size: 18),
+                    label: Text(
+                      state.isLoading ? "Processing..." : "Edit Info",
                       style: TextStyle(
-                          color: Colors.blue, fontWeight: FontWeight.bold),
+                          color: state.isLoading ? Colors.grey : Colors.blue,
+                          fontWeight: FontWeight.bold),
                     ),
                     style: TextButton.styleFrom(
                       backgroundColor: Colors.blue.shade50,
+                      disabledBackgroundColor: Colors.grey.shade100,
+                      disabledForegroundColor: Colors.grey.shade400,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 12),
                       shape: RoundedRectangleBorder(
@@ -644,36 +662,47 @@ class TransactionDetailView extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: TextButton.icon(
-                    onPressed: () async {
-                      final confirm = await showDeleteConfirmDialog(context,
-                          title: 'Delete Transaction?',
-                          message:
-                              'This will delete the transaction and RESTORE stock. This action cannot be undone.\n\nUse this only for double transactions or errors.');
-                      if (confirm == true && context.mounted) {
-                        final success = await ref
-                            .read(transactionProvider.notifier)
-                            .deleteTransaction(transaction['id']);
+                    onPressed: state.isLoading
+                        ? null
+                        : () async {
+                            final confirm = await showDeleteConfirmDialog(
+                                context,
+                                title: 'Delete Transaction?',
+                                message:
+                                    'This will delete the transaction and RESTORE stock. This action cannot be undone.\n\nUse this only for double transactions or errors.');
+                            if (confirm == true && context.mounted) {
+                              final success = await ref
+                                  .read(transactionProvider.notifier)
+                                  .deleteTransaction(transaction['id']);
 
-                        if (context.mounted) {
-                          if (success) {
-                            showSuccessSnackBar(
-                                context, 'Transaction deleted successfully');
-                          } else {
-                            showErrorSnackBar(
-                                context, 'Failed to delete transaction');
-                          }
-                        }
-                      }
-                    },
-                    icon:
-                        const Icon(Iconsax.trash, color: Colors.red, size: 18),
-                    label: const Text(
-                      "Void / Delete",
+                              if (context.mounted) {
+                                if (success) {
+                                  showSuccessSnackBar(context,
+                                      'Transaction deleted successfully');
+                                }
+                              }
+                            }
+                          },
+                    icon: state.isLoading
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.grey,
+                            ))
+                        : const Icon(Iconsax.trash,
+                            color: Colors.red, size: 18),
+                    label: Text(
+                      state.isLoading ? "Processing..." : "Void / Delete",
                       style: TextStyle(
-                          color: Colors.red, fontWeight: FontWeight.bold),
+                          color: state.isLoading ? Colors.grey : Colors.red,
+                          fontWeight: FontWeight.bold),
                     ),
                     style: TextButton.styleFrom(
                       backgroundColor: Colors.red.shade50,
+                      disabledBackgroundColor: Colors.grey.shade100,
+                      disabledForegroundColor: Colors.grey.shade400,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 12),
                       shape: RoundedRectangleBorder(

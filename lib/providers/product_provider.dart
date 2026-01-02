@@ -10,16 +10,27 @@ final productServiceProvider = Provider<ProductService>((ref) {
 class ProductState {
   final List<Map<String, dynamic>> products;
   final bool isLoading;
+  final String? errorMessage;
+  final bool isSuccess;
 
-  ProductState({this.products = const [], this.isLoading = false});
+  ProductState({
+    this.products = const [],
+    this.isLoading = false,
+    this.errorMessage,
+    this.isSuccess = false,
+  });
 
   ProductState copyWith({
     List<Map<String, dynamic>>? products,
     bool? isLoading,
+    String? errorMessage,
+    bool? isSuccess,
   }) {
     return ProductState(
       products: products ?? this.products,
       isLoading: isLoading ?? this.isLoading,
+      errorMessage: errorMessage,
+      isSuccess: isSuccess ?? this.isSuccess,
     );
   }
 }
@@ -30,37 +41,48 @@ class ProductNotifier extends StateNotifier<ProductState> {
   ProductNotifier(this._service) : super(ProductState());
 
   Future<void> fetchAllProducts() async {
-    final data = await _service.getAllProduct();
-    state = state.copyWith(products: data);
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final data = await _service.getAllProduct();
+      state = state.copyWith(isLoading: false, products: data);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    }
   }
 
   Future<void> addProduct(Map<String, dynamic> payload) async {
-    state = state.copyWith(isLoading: true);
+    state =
+        state.copyWith(isLoading: true, errorMessage: null, isSuccess: false);
     try {
       await _service.createProduct(payload);
       await fetchAllProducts();
-    } finally {
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(isSuccess: true);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
   }
 
   Future<void> editProduct(int productId, Map<String, dynamic> payload) async {
-    state = state.copyWith(isLoading: true);
+    state =
+        state.copyWith(isLoading: true, errorMessage: null, isSuccess: false);
     try {
       await _service.editProduct(productId, payload);
       await fetchAllProducts();
-    } finally {
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(isSuccess: true);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
   }
 
   Future<void> deleteProduct(int productId) async {
-    state = state.copyWith(isLoading: true);
+    state =
+        state.copyWith(isLoading: true, errorMessage: null, isSuccess: false);
     try {
       await _service.deleteProduct(productId);
       await fetchAllProducts();
-    } finally {
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(isSuccess: true);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
   }
 }

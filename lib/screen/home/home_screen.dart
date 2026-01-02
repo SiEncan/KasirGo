@@ -7,6 +7,7 @@ import 'package:kasir_go/screen/home/components/header_section.dart';
 import 'package:kasir_go/screen/home/components/order_detail.dart';
 import 'package:kasir_go/screen/home/components/product_view.dart';
 import 'package:kasir_go/screen/home/components/skeleton_widgets.dart';
+
 import 'package:kasir_go/utils/session_helper.dart';
 import 'package:kasir_go/utils/snackbar_helper.dart';
 
@@ -21,16 +22,14 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen>
     with SingleTickerProviderStateMixin {
-  String selectedCategoryId = '';
+  String selectedCategoryId = 'all';
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  bool _isLoading = true;
   late AnimationController _shimmerController;
 
   @override
   void initState() {
     super.initState();
-    selectedCategoryId = 'all';
     _shimmerController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
@@ -62,39 +61,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Future<void> _refreshData() async {
-    setState(() {
-      _isLoading = true;
-    });
+    if (!mounted) return;
+    await ref.read(categoryProvider.notifier).fetchAllCategories();
 
-    try {
-      await ref.read(categoryProvider.notifier).fetchAllCategories();
-      await ref.read(productProvider.notifier).fetchAllProducts();
-
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-
-      // Jika session expired, logout dan redirect ke login
-      if (isSessionExpiredError(e)) {
-        if (!mounted) return;
-        await handleSessionExpired(context, ref);
-        return;
-      }
-
-      // Show error snackbar
-      if (mounted) {
-        showErrorSnackBar(context, e.toString(),
-            title: 'Failed to refresh data: ');
-      }
-    }
+    if (!mounted) return;
+    await ref.read(productProvider.notifier).fetchAllProducts();
   }
 
   @override
@@ -102,10 +73,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final categoriesState = ref.watch(categoryProvider);
     final productsState = ref.watch(productProvider);
 
+    // Listen for Product Errors
+    ref.listen(productProvider, (previous, next) {
+      if (next.errorMessage != null &&
+          next.errorMessage != previous?.errorMessage) {
+        if (isSessionExpiredError(next.errorMessage)) {
+          handleSessionExpired(context, ref);
+          return;
+        }
+        showErrorSnackBar(context, next.errorMessage!);
+      }
+    });
+
+    // Listen for Category Errors
+    ref.listen(categoryProvider, (previous, next) {
+      if (next.errorMessage != null &&
+          next.errorMessage != previous?.errorMessage) {
+        if (isSessionExpiredError(next.errorMessage)) {
+          handleSessionExpired(context, ref);
+          return;
+        }
+        showErrorSnackBar(context, next.errorMessage!);
+      }
+    });
+
     // Check if data is actually loaded
     final hasData = categoriesState.categories.isNotEmpty ||
         productsState.products.isNotEmpty;
-    final isActuallyLoading = _isLoading && !hasData;
+
+    // Use provider loading state instead of local state
+    final isActuallyLoading =
+        (categoriesState.isLoading || productsState.isLoading) && !hasData;
 
     // Sort categories by custom order
     final sortedCategories =

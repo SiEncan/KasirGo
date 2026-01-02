@@ -230,26 +230,28 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
                                   );
 
                                   if (confirm == true && mounted) {
-                                    try {
-                                      await ref
-                                          .read(categoryProvider.notifier)
-                                          .deleteCategory(
-                                              widget.category['id']);
-                                      if (context.mounted) {
-                                        Navigator.pop(context);
-                                        showSuccessSnackBar(context,
-                                            'Category deleted successfully');
-                                      }
-                                    } catch (e) {
-                                      if (context.mounted) {
-                                        if (isSessionExpiredError(e)) {
+                                    await ref
+                                        .read(categoryProvider.notifier)
+                                        .deleteCategory(widget.category['id']);
+
+                                    if (context.mounted) {
+                                      final errorMessage = ref
+                                          .read(categoryProvider)
+                                          .errorMessage;
+
+                                      if (errorMessage != null) {
+                                        if (isSessionExpiredError(
+                                            errorMessage)) {
                                           await handleSessionExpired(
                                               context, ref);
                                           return;
                                         }
-
-                                        showErrorDialog(context, e.toString(),
+                                        showErrorDialog(context, errorMessage,
                                             title: 'Delete Failed');
+                                      } else {
+                                        Navigator.pop(context); // Close dialog
+                                        showSuccessSnackBar(context,
+                                            'Category deleted successfully');
                                       }
                                     }
                                   }
@@ -332,25 +334,26 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
                                 'description': descController.text,
                               };
 
-                              try {
-                                await ref
-                                    .read(categoryProvider.notifier)
-                                    .editCategory(
-                                        widget.category['id'], updatedCategory);
-                                if (!context.mounted) return;
-                                Navigator.pop(context);
-                                showSuccessSnackBar(
-                                    context, 'Category updated successfully');
-                              } catch (e) {
-                                if (!context.mounted) return;
+                              await ref
+                                  .read(categoryProvider.notifier)
+                                  .editCategory(
+                                      widget.category['id'], updatedCategory);
 
-                                if (isSessionExpiredError(e)) {
-                                  await handleSessionExpired(context, ref);
-                                  return;
+                              if (context.mounted) {
+                                final errorMessage =
+                                    ref.read(categoryProvider).errorMessage;
+                                if (errorMessage != null) {
+                                  if (isSessionExpiredError(errorMessage)) {
+                                    await handleSessionExpired(context, ref);
+                                    return;
+                                  }
+                                  showErrorDialog(context, errorMessage,
+                                      title: 'Update Failed');
+                                } else {
+                                  Navigator.pop(context);
+                                  showSuccessSnackBar(
+                                      context, 'Category updated successfully');
                                 }
-
-                                showErrorDialog(context, e.toString(),
-                                    title: 'Update Failed');
                               }
                             },
                       icon: isLoading

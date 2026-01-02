@@ -121,11 +121,15 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
         page: 1,
         hasMore: true,
         transactions: [],
-        isLoading: true, // Show main loading only on refresh/initial
+        isLoading: true,
+        errorMessage: null, // Reset error on refresh
       );
     } else {
       if (!state.hasMore) return;
-      state = state.copyWith(isLoadingMore: true);
+      state = state.copyWith(
+        isLoadingMore: true,
+        errorMessage: null, // Reset error on load more
+      );
     }
 
     try {
@@ -218,6 +222,8 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
   }
 
   Future<bool> deleteTransaction(int id) async {
+    state =
+        state.copyWith(isLoading: true, isSuccess: false, errorMessage: null);
     try {
       await _service.deleteTransaction(id);
 
@@ -226,6 +232,8 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
           state.transactions.where((t) => t['id'] != id).toList();
 
       state = state.copyWith(
+        isLoading: false,
+        isSuccess: true,
         transactions: updatedTransactions,
         selectedTransaction: state.selectedTransaction?['id'] == id
             ? null
@@ -237,12 +245,14 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
 
       return true;
     } catch (e) {
-      state = state.copyWith(errorMessage: e.toString());
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
       return false;
     }
   }
 
   Future<bool> updateTransaction(int id, Map<String, dynamic> data) async {
+    state =
+        state.copyWith(isLoading: true, isSuccess: false, errorMessage: null);
     try {
       final result = await _service.updateTransaction(id, data);
       final updatedData = result['data'];
@@ -253,6 +263,8 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
       }).toList();
 
       state = state.copyWith(
+        isLoading: false,
+        isSuccess: true,
         transactions: List<Map<String, dynamic>>.from(updatedTransactions),
         selectedTransaction: state.selectedTransaction?['id'] == id
             ? updatedData
@@ -271,7 +283,7 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
       }
       return true;
     } catch (e) {
-      state = state.copyWith(errorMessage: e.toString());
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
       return false;
     }
   }
@@ -282,7 +294,7 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
 
   // Kitchen Fetch
   Future<void> fetchKitchenTransactions() async {
-    state = state.copyWith(isLoadingKitchen: true);
+    state = state.copyWith(isLoadingKitchen: true, errorMessage: null);
     try {
       final result =
           await _service.getTransactions(status: 'processing', pageSize: 50);

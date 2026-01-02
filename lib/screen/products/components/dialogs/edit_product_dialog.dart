@@ -582,24 +582,25 @@ class _EditProductDialogState extends ConsumerState<EditProductDialog> {
                                 "category": _productCategory,
                               };
 
-                              try {
-                                await ref
-                                    .read(productProvider.notifier)
-                                    .editProduct(widget.product['id'], payload);
-                                if (!context.mounted) return;
-                                Navigator.pop(context);
-                                showSuccessSnackBar(
-                                    context, 'Product updated successfully');
-                              } catch (e) {
-                                if (!context.mounted) return;
+                              await ref
+                                  .read(productProvider.notifier)
+                                  .editProduct(widget.product['id'], payload);
 
-                                if (isSessionExpiredError(e)) {
-                                  await handleSessionExpired(context, ref);
-                                  return;
+                              if (context.mounted) {
+                                final errorMessage =
+                                    ref.read(productProvider).errorMessage;
+                                if (errorMessage != null) {
+                                  if (isSessionExpiredError(errorMessage)) {
+                                    await handleSessionExpired(context, ref);
+                                    return;
+                                  }
+                                  showErrorDialog(context, errorMessage,
+                                      title: 'Update Failed');
+                                } else {
+                                  Navigator.pop(context);
+                                  showSuccessSnackBar(
+                                      context, 'Product updated successfully');
                                 }
-
-                                showErrorDialog(context, e.toString(),
-                                    title: 'Update Failed');
                               }
                             },
                       style: ElevatedButton.styleFrom(

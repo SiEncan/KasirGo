@@ -4,6 +4,7 @@ import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
 import 'package:kasir_go/providers/transaction_provider.dart';
 import 'package:kasir_go/utils/currency_helper.dart';
+import 'package:kasir_go/utils/session_helper.dart';
 import 'package:kasir_go/utils/snackbar_helper.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -40,6 +41,17 @@ class _TransactionListState extends ConsumerState<TransactionList> {
   Widget build(BuildContext context) {
     final state = ref.watch(transactionProvider);
 
+    ref.listen(transactionProvider, (previous, next) {
+      if (next.errorMessage != null &&
+          next.errorMessage != previous?.errorMessage) {
+        if (isSessionExpiredError(next.errorMessage)) {
+          handleSessionExpired(context, ref);
+          return;
+        }
+        showErrorSnackBar(context, next.errorMessage!);
+      }
+    });
+
     if (state.isLoading && state.transactions.isEmpty) {
       return Center(
           child: CircularProgressIndicator(
@@ -48,12 +60,78 @@ class _TransactionListState extends ConsumerState<TransactionList> {
     }
 
     if (state.errorMessage != null && state.transactions.isEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) {
-          showErrorSnackBar(context, state.errorMessage!);
-        }
-      });
-      return Center(child: Text('Error: ${state.errorMessage}'));
+      return RefreshIndicator(
+        color: Colors.orange,
+        onRefresh: () async {
+          await ref
+              .read(transactionProvider.notifier)
+              .fetchTransactions(refresh: true);
+        },
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Iconsax.warning_2,
+                            size: 40, color: Colors.red.shade400),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Oops! Something went wrong',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade900,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        state.errorMessage ?? 'Unknown error occurred',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: () => ref
+                            .read(transactionProvider.notifier)
+                            .fetchTransactions(refresh: true),
+                        icon: const Icon(Iconsax.refresh, size: 18),
+                        label: const Text("Try Again"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepOrange.shade400,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     if (state.transactions.isEmpty) {

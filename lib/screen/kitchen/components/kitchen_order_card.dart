@@ -5,13 +5,21 @@ import 'package:kasir_go/utils/snackbar_helper.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:intl/intl.dart';
 
-class KitchenOrderCard extends ConsumerWidget {
+class KitchenOrderCard extends ConsumerStatefulWidget {
   final Map<String, dynamic> order;
 
   const KitchenOrderCard({super.key, required this.order});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<KitchenOrderCard> createState() => _KitchenOrderCardState();
+}
+
+class _KitchenOrderCardState extends ConsumerState<KitchenOrderCard> {
+  bool _isLoading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final order = widget.order;
     final items = order['items'] as List<dynamic>? ?? [];
     final timestamp = DateTime.tryParse(order['created_at'] ?? '')?.toLocal() ??
         DateTime.now().toLocal();
@@ -133,31 +141,52 @@ class KitchenOrderCard extends ConsumerWidget {
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () async {
-                  try {
-                    await ref
-                        .read(transactionProvider.notifier)
-                        .updateTransaction(
-                            order['id'], {'status': 'completed'});
-                    if (context.mounted) {
-                      showSuccessSnackBar(context, 'Order marked as served');
-                      // Refresh list logic is handled by provider state update or timer
-                      ref
-                          .read(transactionProvider.notifier)
-                          .fetchKitchenTransactions();
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      showErrorSnackBar(context, e.toString(),
-                          title: 'Failed to mark order as served');
-                    }
-                  }
-                },
-                icon: const Icon(LucideIcons.check, size: 16),
-                label: const Text('Mark Served'),
+                onPressed: _isLoading
+                    ? null
+                    : () async {
+                        setState(() {
+                          _isLoading = true;
+                        });
+
+                        final success = await ref
+                            .read(transactionProvider.notifier)
+                            .updateTransaction(
+                                order['id'], {'status': 'completed'});
+
+                        if (context.mounted) {
+                          setState(() {
+                            _isLoading = false;
+                          });
+
+                          if (success) {
+                            showSuccessSnackBar(
+                                context, 'Order marked as served');
+                            ref
+                                .read(transactionProvider.notifier)
+                                .fetchKitchenTransactions();
+                          }
+                        }
+                      },
+                icon: _isLoading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.grey,
+                        ))
+                    : const Icon(LucideIcons.check, size: 16),
+                label: Text(
+                  _isLoading ? 'Processing...' : 'Mark Served',
+                  style: TextStyle(
+                      color: _isLoading ? Colors.grey : Colors.white,
+                      fontWeight: FontWeight.bold),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
+                  disabledBackgroundColor: Colors.grey.shade200,
+                  disabledForegroundColor: Colors.grey,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(

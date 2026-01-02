@@ -533,24 +533,25 @@ class _AddProductDialogState extends ConsumerState<AddProductDialog> {
                                 "category": _productCategory,
                               };
 
-                              try {
-                                await ref
-                                    .read(productProvider.notifier)
-                                    .addProduct(payload);
-                                if (!context.mounted) return;
-                                Navigator.pop(context);
-                                showSuccessSnackBar(
-                                    context, 'Product added successfully');
-                              } catch (e) {
-                                if (!context.mounted) return;
+                              await ref
+                                  .read(productProvider.notifier)
+                                  .addProduct(payload);
 
-                                if (isSessionExpiredError(e)) {
-                                  await handleSessionExpired(context, ref);
-                                  return;
+                              if (context.mounted) {
+                                final errorMessage =
+                                    ref.read(productProvider).errorMessage;
+                                if (errorMessage != null) {
+                                  if (isSessionExpiredError(errorMessage)) {
+                                    await handleSessionExpired(context, ref);
+                                    return;
+                                  }
+                                  showErrorDialog(context, errorMessage,
+                                      title: 'Failed to Add Product');
+                                } else {
+                                  Navigator.pop(context);
+                                  showSuccessSnackBar(
+                                      context, 'Product added successfully');
                                 }
-
-                                showErrorDialog(context, e.toString(),
-                                    title: 'Failed to Add Product');
                               }
                             },
                       style: ElevatedButton.styleFrom(

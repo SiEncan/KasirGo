@@ -8,6 +8,7 @@ import 'package:kasir_go/screen/products/components/dialogs/edit_category_dialog
 import 'package:kasir_go/providers/product_provider.dart';
 import 'package:kasir_go/providers/category_provider.dart';
 import 'package:kasir_go/utils/session_helper.dart';
+import 'package:kasir_go/utils/snackbar_helper.dart';
 
 class ManageProductsScreen extends ConsumerStatefulWidget {
   const ManageProductsScreen({super.key});
@@ -28,17 +29,10 @@ class _ManageProductsScreenState extends ConsumerState<ManageProductsScreen> {
     selectedCategoryId = 'all';
 
     Future.microtask(() async {
-      try {
-        await ref.read(categoryProvider.notifier).fetchAllCategories();
-        await ref.read(productProvider.notifier).fetchAllProducts();
-      } catch (e) {
-        // Jika session expired, logout dan redirect ke login
-        if (isSessionExpiredError(e)) {
-          if (!mounted) return;
-          await handleSessionExpired(context, ref);
-          return;
-        }
-      }
+      if (!mounted) return;
+      await ref.read(categoryProvider.notifier).fetchAllCategories();
+      if (!mounted) return;
+      await ref.read(productProvider.notifier).fetchAllProducts();
     });
   }
 
@@ -52,6 +46,29 @@ class _ManageProductsScreenState extends ConsumerState<ManageProductsScreen> {
   Widget build(BuildContext context) {
     final categoriesState = ref.watch(categoryProvider);
     final productsState = ref.watch(productProvider);
+
+    // Error Listeners
+    ref.listen(productProvider, (previous, next) {
+      if (next.errorMessage != null &&
+          next.errorMessage != previous?.errorMessage) {
+        if (isSessionExpiredError(next.errorMessage)) {
+          handleSessionExpired(context, ref);
+          return;
+        }
+        showErrorSnackBar(context, next.errorMessage!);
+      }
+    });
+
+    ref.listen(categoryProvider, (previous, next) {
+      if (next.errorMessage != null &&
+          next.errorMessage != previous?.errorMessage) {
+        if (isSessionExpiredError(next.errorMessage)) {
+          handleSessionExpired(context, ref);
+          return;
+        }
+        showErrorSnackBar(context, next.errorMessage!);
+      }
+    });
 
     final selectedCategory = selectedCategoryId == 'all'
         ? {'name': 'All Products'}

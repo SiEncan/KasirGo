@@ -11,6 +11,7 @@ import 'package:kasir_go/screen/checkout/components/payment_success_dialog.dart'
 import 'package:kasir_go/screen/checkout/components/cash_payment_dialog.dart';
 import 'package:kasir_go/screen/payment_screen.dart';
 import 'package:kasir_go/utils/dialog_helper.dart';
+import 'package:kasir_go/utils/session_helper.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
@@ -133,78 +134,85 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         .read(transactionProvider.notifier)
         .createTransaction(transactionPayload);
 
-    if (mounted) Navigator.pop(context); // Close loading
+    if (transaction != null) {
+      if (!mounted) return;
+      final transactionId = transaction['id'];
 
-    if (transaction == null) {
-      if (mounted) {
-        showErrorDialog(
+      // 3. Handle Payment
+      if (selectedPaymentMethod == 'QRIS' ||
+          selectedPaymentMethod == 'BCA VA') {
+        final paymentMethod = selectedPaymentMethod == 'QRIS' ? 'SP' : 'BC';
+
+        final success = await ref.read(paymentProvider.notifier).createPayment({
+          'transaction_id': transactionId,
+          'payment_method': paymentMethod,
+        });
+
+        if (mounted) Navigator.pop(context); // Close loading
+
+        if (success) {
+          if (!mounted) return;
+          final paymentResult = await Navigator.push<bool>(
             context,
-            ref.read(transactionProvider).errorMessage ??
-                'Transaction creation failed');
-      }
-      return;
-    }
+            MaterialPageRoute(
+              builder: (context) => const PaymentScreen(),
+            ),
+          );
 
-    final transactionId = transaction['id'];
-
-    // 3. Handle Payment
-    if (selectedPaymentMethod == 'QRIS' || selectedPaymentMethod == 'BCA VA') {
-      if (mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (_) => const Center(child: CircularProgressIndicator()),
-        );
-      }
-      final paymentMethod = selectedPaymentMethod == 'QRIS' ? 'SP' : 'BC';
-      final success = await ref.read(paymentProvider.notifier).createPayment({
-        'transaction_id': transactionId,
-        'payment_method': paymentMethod,
-      });
-
-      if (mounted) Navigator.pop(context); // Close loading
-
-      if (success) {
-        if (!mounted) return;
-        final paymentResult = await Navigator.push<bool>(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const PaymentScreen(),
-          ),
-        );
-
-        if (paymentResult == true) {
+          if (paymentResult == true) {
+            if (mounted) {
+              _showSuccessDialog(
+                  total: total,
+                  paid: paidAmount,
+                  change: changeAmount,
+                  paymentMethod: selectedPaymentMethod);
+            }
+          }
+        } else {
+          // Handle Payment Error
           if (mounted) {
-            _showSuccessDialog(
-                total: total,
-                paid: paidAmount,
-                change: changeAmount,
-                paymentMethod: selectedPaymentMethod);
+            final errorMessage = ref.read(paymentProvider).errorMessage;
+            if (errorMessage != null) {
+              if (isSessionExpiredError(errorMessage)) {
+                await handleSessionExpired(context, ref);
+                return;
+              }
+              showErrorDialog(context, errorMessage,
+                  title: 'Payment with $selectedPaymentMethod Failed');
+            }
           }
         }
       } else {
+        if (mounted) Navigator.pop(context); // Close loading
         if (mounted) {
-          showErrorDialog(
-              context,
-              ref.read(paymentProvider).errorMessage ??
-                  'Payment creation failed',
-              title: 'Payment with $selectedPaymentMethod Failed');
+          _showSuccessDialog(
+              trxId: transaction['transaction_number'],
+              total: total,
+              paid: paidAmount,
+              change: changeAmount,
+              paymentMethod: selectedPaymentMethod);
         }
       }
     } else {
       if (mounted) {
-        _showSuccessDialog(
-            trxId: transaction['transaction_number'],
-            total: total,
-            paid: paidAmount,
-            change: changeAmount,
-            paymentMethod: selectedPaymentMethod);
+        Navigator.pop(context); // Close loading
+        final errorMessage = ref.read(transactionProvider).errorMessage;
+        if (errorMessage != null) {
+          if (isSessionExpiredError(errorMessage)) {
+            await handleSessionExpired(context, ref);
+            return;
+          }
+          showErrorDialog(context, errorMessage, title: 'Transaction Failed');
+        }
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Listeners for Transaction/Payment errors are handled locally in _handleConfirmPayment
+    // to avoid conflict with the imperative loading dialog.
+
     final cartItems = ref.read(cartProvider);
     final settings = ref.read(settingProvider);
     final subtotal = ref.read(cartProvider.notifier).getTotalCartPrice();

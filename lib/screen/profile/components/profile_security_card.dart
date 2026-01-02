@@ -10,6 +10,7 @@ class ProfileSecurityCard extends StatefulWidget {
   final TextEditingController oldPasswordController;
   final TextEditingController newPasswordController;
   final TextEditingController confirmPasswordController;
+  final bool isLoading;
 
   const ProfileSecurityCard({
     super.key,
@@ -20,6 +21,7 @@ class ProfileSecurityCard extends StatefulWidget {
     required this.oldPasswordController,
     required this.newPasswordController,
     required this.confirmPasswordController,
+    this.isLoading = false,
   });
 
   @override
@@ -201,7 +203,7 @@ class _ProfileSecurityCardState extends State<ProfileSecurityCard> {
           children: [
             Expanded(
               child: OutlinedButton(
-                onPressed: widget.onCancelPressed,
+                onPressed: widget.isLoading ? null : widget.onCancelPressed,
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   side: BorderSide(color: Colors.grey.shade400),
@@ -218,22 +220,33 @@ class _ProfileSecurityCardState extends State<ProfileSecurityCard> {
             const SizedBox(width: 12),
             Expanded(
               child: ElevatedButton(
-                onPressed: widget.onUpdatePressed,
+                onPressed: widget.isLoading ? null : widget.onUpdatePressed,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepOrange.shade400,
                   foregroundColor: Colors.white,
+                  disabledBackgroundColor: Colors.grey.shade200,
+                  disabledForegroundColor: Colors.grey,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text(
-                  'Update Password',
-                  style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5),
-                ),
+                child: widget.isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.grey,
+                        ),
+                      )
+                    : const Text(
+                        'Update Password',
+                        style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.5),
+                      ),
               ),
             ),
           ],

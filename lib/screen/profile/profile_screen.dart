@@ -8,7 +8,7 @@ import 'package:kasir_go/screen/profile/components/profile_security_card.dart';
 import 'package:kasir_go/screen/profile/components/profile_logout_button.dart';
 import 'package:kasir_go/utils/dialog_helper.dart';
 import 'package:kasir_go/utils/session_helper.dart';
-import 'package:kasir_go/utils/snackbar_helper.dart';
+
 import '../../providers/auth_provider.dart';
 import '../login_screen.dart';
 
@@ -57,10 +57,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _refreshData() async {
-    try {
-      final profile = await ref.read(authProvider.notifier).getProfile();
-      if (!mounted) return;
+    // Errors are captured by provider and displayed via ref.listen in build()
+    final profile = await ref.read(authProvider.notifier).getProfile();
 
+    // If mounted check to ensure we don't set state on unmounted widget
+    if (!mounted) return;
+
+    if (profile != null) {
       setState(() {
         _profile = profile;
         _isLoading = false;
@@ -70,27 +73,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         _emailController.text = profile['email'] ?? '';
         _phoneController.text = profile['phone'] ?? '';
       });
-    } catch (e) {
-      if (!mounted) return;
-
-      if (isSessionExpiredError(e)) {
-        await handleSessionExpired(context, ref);
-        return;
-      }
-
-      if (!mounted) return;
+    } else {
+      // Profile fetch failed (provider state has error)
       setState(() {
-        _errorMessage = e.toString();
         _isLoading = false;
+        _errorMessage = ref.read(authProvider).errorMessage;
       });
-
-      showErrorSnackBar(context, e.toString(),
-          title: 'Failed to fetch profile: ');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(authProvider, (previous, next) {
+      if (next.errorMessage != null &&
+          next.errorMessage != previous?.errorMessage) {
+        if (isSessionExpiredError(next.errorMessage)) {
+          handleSessionExpired(context, ref);
+          return;
+        }
+        showErrorDialog(context, next.errorMessage!, title: "Action Failed");
+      }
+    });
+
+    final isSubmitting =
+        ref.watch(authProvider.select((state) => state.isLoading));
+
     // Handle loading state
     if (_isLoading) {
       return Scaffold(
@@ -127,7 +134,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     color: Colors.red.shade50,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Iconsax.info_circle,
+                  child: Icon(Iconsax.warning_2,
                       size: 64, color: Colors.red.shade400),
                 ),
                 const SizedBox(height: 24),
@@ -231,6 +238,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       // Info Card
                       ProfileInfoCard(
                         isEditing: _isEditing,
+                        isLoading: isSubmitting,
                         usernameController: _usernameController,
                         firstNameController: _firstNameController,
                         lastNameController: _lastNameController,
@@ -254,6 +262,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       // Security Card
                       ProfileSecurityCard(
                         isChangingPassword: _isChangingPassword,
+                        isLoading: isSubmitting,
                         oldPasswordController: _oldPasswordController,
                         newPasswordController: _newPasswordController,
                         confirmPasswordController: _confirmPasswordController,
@@ -322,33 +331,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       return;
     }
 
-    try {
-      await ref.read(authProvider.notifier).updateProfile(
-            username: _usernameController.text.trim(),
-            firstName: _firstNameController.text.trim(),
-            lastName: _lastNameController.text.trim(),
-            email: _emailController.text.trim(),
-            phone: _phoneController.text.trim(),
-          );
+    await ref.read(authProvider.notifier).updateProfile(
+          username: _usernameController.text.trim(),
+          firstName: _firstNameController.text.trim(),
+          lastName: _lastNameController.text.trim(),
+          email: _emailController.text.trim(),
+          phone: _phoneController.text.trim(),
+        );
 
-      if (!mounted) return;
+    if (!mounted) return;
 
+    // Check Success locally for flow control
+    if (ref.read(authProvider).isSuccess) {
       setState(() {
         _isEditing = false;
       });
 
       showSuccessDialog(context, 'Your profile has been updated successfully',
           title: 'Profile Updated');
-    } catch (e) {
-      if (!mounted) return;
-
-      // Handle session expired
-      if (isSessionExpiredError(e)) {
-        await handleSessionExpired(context, ref);
-        return;
-      }
-
-      showErrorDialog(context, e.toString(), title: 'Update Failed');
     }
   }
 
@@ -375,13 +375,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       return;
     }
 
-    try {
-      await ref.read(authProvider.notifier).changePassword(
-            oldPassword: _oldPasswordController.text.trim(),
-            newPassword: _newPasswordController.text.trim(),
-          );
+    await ref.read(authProvider.notifier).changePassword(
+          oldPassword: _oldPasswordController.text.trim(),
+          newPassword: _newPasswordController.text.trim(),
+        );
 
-      if (!mounted) return;
+    if (!mounted) return;
+
+    if (ref.read(authProvider).isSuccess) {
       setState(() {
         _isChangingPassword = false;
         _oldPasswordController.clear();
@@ -391,20 +392,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
       showSuccessDialog(context, 'Your password has been changed successfully',
           title: 'Password Updated');
-    } catch (e) {
-      if (!mounted) return;
-
-      // Handle session expired
-      if (isSessionExpiredError(e)) {
-        await handleSessionExpired(context, ref);
-        return;
-      }
-
-      showErrorDialog(
-        context,
-        e.toString(),
-        title: 'Update Failed',
-      );
     }
   }
 }

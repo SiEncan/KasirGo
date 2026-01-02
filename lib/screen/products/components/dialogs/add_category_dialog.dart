@@ -276,24 +276,25 @@ class _AddCategoryDialogState extends ConsumerState<AddCategoryDialog> {
                                 'description': descController.text,
                               };
 
-                              try {
-                                await ref
-                                    .read(categoryProvider.notifier)
-                                    .addCategory(newCategory);
-                                if (!context.mounted) return;
-                                Navigator.pop(context);
-                                showSuccessSnackBar(
-                                    context, 'Category added successfully');
-                              } catch (e) {
-                                if (!context.mounted) return;
+                              await ref
+                                  .read(categoryProvider.notifier)
+                                  .addCategory(newCategory);
 
-                                if (isSessionExpiredError(e)) {
-                                  await handleSessionExpired(context, ref);
-                                  return;
+                              if (context.mounted) {
+                                final errorMessage =
+                                    ref.read(categoryProvider).errorMessage;
+                                if (errorMessage != null) {
+                                  if (isSessionExpiredError(errorMessage)) {
+                                    await handleSessionExpired(context, ref);
+                                    return;
+                                  }
+                                  showErrorDialog(context, errorMessage,
+                                      title: 'Failed to Add Category');
+                                } else {
+                                  Navigator.pop(context);
+                                  showSuccessSnackBar(
+                                      context, 'Category added successfully');
                                 }
-
-                                showErrorDialog(context, e.toString(),
-                                    title: 'Failed to Add Category');
                               }
                             },
                       icon: isLoading

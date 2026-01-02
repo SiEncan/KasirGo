@@ -7,7 +7,6 @@ import 'package:kasir_go/providers/product_provider.dart';
 import 'package:kasir_go/utils/currency_helper.dart';
 import 'package:kasir_go/utils/snackbar_helper.dart';
 import 'package:kasir_go/utils/dialog_helper.dart';
-import 'package:kasir_go/utils/session_helper.dart';
 
 class ProductTable extends ConsumerWidget {
   final List<Map<String, dynamic>> products;
@@ -410,24 +409,13 @@ class ProductTable extends ConsumerWidget {
                       );
 
                       if (confirm == true && context.mounted) {
-                        try {
-                          await ref
-                              .read(productProvider.notifier)
-                              .deleteProduct(product['id']);
-                          if (context.mounted) {
-                            showSuccessSnackBar(
-                                context, 'Product deleted successfully');
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            if (isSessionExpiredError(e)) {
-                              await handleSessionExpired(context, ref);
-                              return;
-                            }
-
-                            showErrorDialog(context, e.toString(),
-                                title: 'Delete Failed');
-                          }
+                        await ref
+                            .read(productProvider.notifier)
+                            .deleteProduct(product['id']);
+                        if (context.mounted &&
+                            ref.read(productProvider).errorMessage == null) {
+                          showSuccessSnackBar(
+                              context, 'Product deleted successfully');
                         }
                       }
                     },
