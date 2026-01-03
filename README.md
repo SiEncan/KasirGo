@@ -6,7 +6,7 @@
 
 ---
 ## 📖 Overview
-KasirGo is a modern solution for small to medium retail businesses. Unlike traditional clunky POS systems, KasirGo focuses on **User Experience (UX)** and **Performance**. The app connects to a robust Django backend (**[View Backend Repository](https://github.com/SiEncan/KasirGo-Backend)**) but is engineered to handle network instability gracefully through robust error handling and smart image caching.
+KasirGo is a modern solution for small to medium retail businesses. Unlike traditional clunky POS systems, KasirGo focuses on **User Experience (UX)** and **Performance**. The app connects to a robust Django backend (**[View Backend Repository](https://github.com/SiEncan/KasirGo-Backend)**) but is engineered to handle network instability gracefully through robust error handling, smart image caching, and a built-in **Real-Time Kitchen Display System (KDS)**.
 
 ---
 
@@ -38,6 +38,12 @@ KasirGo is a modern solution for small to medium retail businesses. Unlike tradi
     -   Edit Customer Name or Notes after transaction.
     -   **Safe Delete**: Deleting a transaction automatically **restores stock** to inventory.
 
+### 👨‍🍳 Kitchen Display System (KDS)
+-   **Real-Time Dashboard**: Live order feed for kitchen staff using Hybrid Sync/Fetch architecture.
+-   **Smart Urgency Timer**: Color-coded cards (Green/Orange/Red) to track cooking duration in real-time.
+-   **Role-Based Access**: Dedicated mode for kitchen staff vs cashiers.
+-   **Order Routing**: Automatically filters items that need preparation.
+
 ### ⚙️ Store & Profile Settings
 -   **Shop Configuration**: Customize Shop Name, Address, and Phone Number for receipts.
 -   **Tax & Fees**: Configure Global Tax (%) and Takeaway Charges with a **Live Calculation Preview**.
@@ -54,6 +60,7 @@ KasirGo is a modern solution for small to medium retail businesses. Unlike tradi
 
 ### 🛡️ Security & Networking (Dio)
 -   **Smart Authentication**: Auto-refresh JWT tokens using **Dio Interceptors** ensuring uninterrupted sessions.
+-   **Hybrid Authentication**: Implements a **Backend-to-Firebase** token exchange protocol to secure realtime streams without public access.
 -   **Robust Error Handling**: Centralized error interceptor to gracefully handle timeouts and connection failures.
 
 ### 🏗️ State Management (Riverpod)
@@ -89,6 +96,9 @@ KasirGo is a modern solution for small to medium retail businesses. Unlike tradi
 - **Challenge**: Syncing full order data to a NoSQL cloud (Firebase) creates a **"Double Data"** problem where the Cloud state might mismatch the SQL state (e.g., "Ghost Orders" that persist in KDS after being voided in POS due to network failure).
 - **Solution**: Rejected full-data sync in favor of a **Hybrid Signal Architecture**. Firebase is used *strictly* as a trigger ("Ding!"). When triggered, KDS fetches the payload directly from the Django SQL database. This guarantees **Single Source of Truth** and 100% data consistency, eliminating sync bugs.
 
+### 7. Securing Multi-Tenant Realtime Streams
+- **Challenge**: In a SaaS model, how do we ensure "Cafe A" cannot listen to "Cafe B's" realtime order stream without building a complex backend proxy or forcing every cashier to have a separate Firebase account?
+- **Solution**: Implemented a **Hybrid Token Exchange**. The Django Backend (which knows the user's SaaS scope) mints a **Firebase Custom Token** injected with a specific `cafe_id` claim. Firebase Security Rules then reject any listener unless `auth.cafe_id` matches the requested channel. This provides **Zero-Trust Security** at the database level without authentication friction.
 ---
 
 ## 🍳 Kitchen Display System (KDS) & Hybrid Architecture
@@ -98,15 +108,16 @@ KasirGo features a **Real-Time Kitchen Display System** that syncs with the POS 
 ### 📡 Hybrid Architecture (Signal + Fetch)
 Instead of syncing complex order data to Firebase (which creates data integrity risks), we use a **Hybrid Approach**. Here is the step-by-step flow:
 
-1.  **[KDS]**: When the Kitchen App opens, it connects to Firebase and starts *listening* for signals at `store_1/kitchen_trigger`.
-2.  **[POS]**: Cashier completes a transaction. The app saves the full order details to the **Django SQL Database** (Authoritative Source).
-3.  **[POS]**: Once saved, the app sends a lightweight *Timestamp Signal* to Firebase.
-4.  **[Firebase]**: Instantly broadcasts this signal to all listening devices (WebSocket).
-5.  **[KDS]**: Receives the signal ("Ding!").
-6.  **[KDS]**: Reacts by asking Django: *"Hey, give me the latest open orders!"* (Fetch API).
-7.  **[KDS]**: Updates the screen with the verified data from Django.
+1.  **[Auth]**: User logs in via backend. The app requests a **Firebase Custom Token** which grants access restricted to their specific Cafe ID.
+2.  **[KDS]**: The Kitchen App connects to Firebase Realtime Database and listens to a **Dynamic Path**: `stores/$cafe_id/kitchen_trigger`.
+3.  **[POS]**: Cashier completes a transaction. The app saves the full order details to the **Django SQL Database** (Authoritative Source).
+4.  **[POS]**: Once saved, the app sends a lightweight *Timestamp Signal* to the specific Firebase path.
+5.  **[Firebase]**: Instantly broadcasts this signal to KDS devices belonging to that specific Cafe.
+6.  **[KDS]**: Receives the signal ("Ding!").
+7.  **[KDS]**: Reacts by asking Django: *"Hey, give me the latest open orders!"* (Fetch API).
+8.  **[KDS]**: Updates the screen with the verified data from Django.
 
-**Benefit:** 100% Data Integrity. Zero chance of "Ghost Orders" or data mismatch, with Real-Time experience.
+**Benefit:** 100% Data Integrity, Multi-Tenant Security, and Real-Time Speed.
 
 ### 🛠️ Firebase Setup (Optional for Real-Time)
 The KDS works in **Manual Refresh Mode** by default. To enable **Real-Time Automatic Updates**, you must configure Firebase:
@@ -114,27 +125,28 @@ The KDS works in **Manual Refresh Mode** by default. To enable **Real-Time Autom
 1.  **Add Configuration File**: 
     -   Place `google-services.json` in `android/app/`.
     -   *Note: This file is git-ignored for security.*
-    
-2.  **Security Rules (No Auth Required)**:
-    -   We use **Structure Validation** to secure the DB without needing Firebase Auth.
+
+2. **Hybrid Authentication & Security**
+We use **Firebase Custom Tokens** to bridge our JWT Backend with Firebase.
+    -   The backend generates a token with a `cafe_id` claim.
+    -   Firebase Security Rules enforce that a user can only listen to `stores/$cafe_id`.
     -   Copy this to your Firebase Console Rules:
-    ```json
-    {
-      "rules": {
-        "store_1": {
-          "kitchen_trigger": {
-            ".read": true,
-            ".write": "newData.isNumber()" 
-          }
-        }
+```json
+{
+  "rules": {
+    "stores": {
+      "$cafe_id": {
+        ".read": "auth != null && auth.cafe_id === $cafe_id",
+        ".write": "auth != null && auth.cafe_id === $cafe_id"
       }
     }
-    ```
+  }
+}
+```
 
 ### 👨‍🍳 Smart Features
 -   **Startup Mode Selection**: Choose between **POS Role** or **Kitchen Role** at login. Selection is remembered permanently until you switch it.
 -   **Smart Routing**: Only items marked "Needs Preparation" are sent to KDS. Grab & Go items (like bottled water) skip the kitchen.
--   **Queue Management**: FIFO (First-In-First-Out) display for chefs.
 
 ---
 
@@ -142,6 +154,7 @@ The KDS works in **Manual Refresh Mode** by default. To enable **Real-Time Autom
 
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
 
 -   **Framework**: [Flutter](https://flutter.dev/) (SDK 3.x)
 -   **State Management**: [Riverpod 2.0](https://riverpod.dev/) (Unidirectional Data Flow)
@@ -150,6 +163,7 @@ The KDS works in **Manual Refresh Mode** by default. To enable **Real-Time Autom
     -   `cached_network_image`: Optimized image loading.
     -   `qr_flutter`: Generate QRIS codes for dynamic payments from *Duitku* payment gateway.
     -   `barcode_widget`: Render Code 128 barcodes for transaction receipts.
+    -   `firebase_auth` & `firebase_database`: For Hybrid Real-time/Auth capabilities.
 -   **LocalStorage**: `flutter_secure_storage` for token management.
 
 ## 🏗 Architecture
