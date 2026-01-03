@@ -163,7 +163,7 @@ We use **Firebase Custom Tokens** to bridge our JWT Backend with Firebase.
     -   `cached_network_image`: Optimized image loading.
     -   `qr_flutter`: Generate QRIS codes for dynamic payments from *Duitku* payment gateway.
     -   `barcode_widget`: Render Code 128 barcodes for transaction receipts.
-    -   `firebase_auth` & `firebase_database`: For Hybrid Real-time/Auth capabilities.
+-   **Realtime & Auth**: `firebase_auth` & `firebase_database` (Hybrid Architecture).
 -   **LocalStorage**: `flutter_secure_storage` for token management.
 
 ## 🏗 Architecture
