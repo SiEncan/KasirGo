@@ -67,6 +67,18 @@ class PaymentNotifier extends StateNotifier<PaymentState> {
     }
   }
 
+  void setPaymentFromAtomic(Map<String, dynamic> paymentData) {
+    state = state.copyWith(
+      isLoading: false,
+      currentPayment: paymentData,
+      isPaymentSuccess: false,
+    );
+
+    if (paymentData.containsKey('payment_id')) {
+      _startPolling(paymentData['payment_id']);
+    }
+  }
+
   void _startPolling(int paymentId) {
     _pollingTimer?.cancel();
     _pollingTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {

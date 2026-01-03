@@ -107,10 +107,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       initialStatus = needsKitchen ? 'processing' : 'completed';
     }
 
+    // Determine Payment Code for Atomic Backend
+    String? paymentMethodCode;
+    if (selectedPaymentMethod == 'QRIS') paymentMethodCode = 'SP';
+    if (selectedPaymentMethod == 'BCA VA') paymentMethodCode = 'BC';
+
     final transactionPayload = {
       "customer_name": customerName.isNotEmpty ? customerName : "Guest",
       "order_type": selectedOrderType == 'Dine In' ? "dine_in" : "take_away",
       "payment_method": selectedPaymentMethod.toLowerCase(),
+      "payment_method_code": paymentMethodCode,
       "status": initialStatus,
       "paid_amount": paidAmount,
       "subtotal": subtotal,
@@ -123,7 +129,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       "takeaway_charge": takeAwayCharge,
     };
 
-    // 2. Create Transaction
+    // 2. Create Transaction (Atomic)
     if (!mounted) return;
     showDialog(
       context: context,
@@ -136,58 +142,38 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         .read(transactionProvider.notifier)
         .createTransaction(transactionPayload);
 
+    if (!mounted) return;
+    Navigator.pop(context); // Close loading
+
     if (transaction != null) {
-      if (!mounted) return;
-      final transactionId = transaction['id'];
       final bool isKdsError = transaction['_kds_sent'] == false;
 
-      // 3. Handle Payment
-      if (selectedPaymentMethod == 'QRIS' ||
-          selectedPaymentMethod == 'BCA VA') {
-        final paymentMethod = selectedPaymentMethod == 'QRIS' ? 'SP' : 'BC';
+      // 3. Handle Atomic Payment Response
+      if (transaction.containsKey('payment_info')) {
+        // Inject Atomic Payment Data into Provider
+        ref
+            .read(paymentProvider.notifier)
+            .setPaymentFromAtomic(transaction['payment_info']);
 
-        final success = await ref.read(paymentProvider.notifier).createPayment({
-          'transaction_id': transactionId,
-          'payment_method': paymentMethod,
-        });
+        final paymentResult = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const PaymentScreen(),
+          ),
+        );
 
-        if (mounted) Navigator.pop(context); // Close loading
-
-        if (success) {
-          if (!mounted) return;
-          final paymentResult = await Navigator.push<bool>(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const PaymentScreen(),
-            ),
-          );
-
-          if (paymentResult == true) {
-            if (mounted) {
-              _showSuccessDialog(
-                  total: total,
-                  paid: paidAmount,
-                  change: changeAmount,
-                  paymentMethod: selectedPaymentMethod,
-                  isKdsError: isKdsError);
-            }
-          }
-        } else {
-          // Handle Payment Error
+        if (paymentResult == true) {
           if (mounted) {
-            final errorMessage = ref.read(paymentProvider).errorMessage;
-            if (errorMessage != null) {
-              if (isSessionExpiredError(errorMessage)) {
-                await handleSessionExpired(context, ref);
-                return;
-              }
-              showErrorDialog(context, errorMessage,
-                  title: 'Payment with $selectedPaymentMethod Failed');
-            }
+            _showSuccessDialog(
+                total: total,
+                paid: paidAmount,
+                change: changeAmount,
+                paymentMethod: selectedPaymentMethod,
+                isKdsError: isKdsError);
           }
         }
       } else {
-        if (mounted) Navigator.pop(context); // Close loading
+        // Cash or Standard Transaction
         if (mounted) {
           _showSuccessDialog(
               trxId: transaction['transaction_number'],
@@ -199,8 +185,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         }
       }
     } else {
+      // Failure Flow
       if (mounted) {
-        Navigator.pop(context); // Close loading
         final errorMessage = ref.read(transactionProvider).errorMessage;
         if (errorMessage != null) {
           if (isSessionExpiredError(errorMessage)) {

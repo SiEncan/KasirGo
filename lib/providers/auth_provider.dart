@@ -1,3 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/auth_service.dart';
 import '../services/dio_client.dart';
@@ -59,6 +61,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+    } catch (e) {
+      debugPrint("Firebase SignOut Warning: $e");
+    }
     await tokenStorage.clear();
     state = AuthState();
   }

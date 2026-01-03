@@ -340,11 +340,11 @@ class _KitchenOrderCardState extends ConsumerState<KitchenOrderCard> {
                             if (result['success'] == true) {
                               if (result['kds_sent'] == false) {
                                 showWarningSnackBar(context,
-                                    'Served! Tapi gagal lapor Kasir/Display. Harap info manual.',
+                                    'Marked as ready! Tapi gagal lapor Kasir/Display. Harap info manual.',
                                     title: 'Koneksi Terputus');
                               } else {
                                 showSuccessSnackBar(
-                                    context, 'Order marked as served');
+                                    context, 'Order marked as ready');
                               }
                               ref
                                   .read(transactionProvider.notifier)
@@ -362,7 +362,7 @@ class _KitchenOrderCardState extends ConsumerState<KitchenOrderCard> {
                           ))
                       : const Icon(LucideIcons.check, size: 18),
                   label: Text(
-                    _isLoading ? 'Processing...' : 'Mark Served',
+                    _isLoading ? 'Processing...' : 'MARK AS READY',
                     style: TextStyle(
                         color: _isLoading ? Colors.grey : Colors.white,
                         fontWeight: FontWeight.bold,

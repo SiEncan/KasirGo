@@ -197,6 +197,11 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
       final transactionData = Map<String, dynamic>.from(result['data']);
       transactionData['_kds_sent'] = kdsSent;
 
+      // Inject Payment Data if exists (Atomic Flow)
+      if (result.containsKey('payment')) {
+        transactionData['payment_info'] = result['payment'];
+      }
+
       return transactionData;
     } catch (e) {
       state = state.copyWith(
